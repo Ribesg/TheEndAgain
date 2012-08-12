@@ -1,0 +1,26 @@
+# Plugin created for the Itsn3w French Community @ www.itsnew.fr
+name: TheEndAgain
+author: Ribesg
+main: com.github.ribesg.tea.TheEndAgain
+version: 0.99a
+description: Respawn the EnderDragon and/or regen the End world
+
+commands:
+    respawnenderdragon:
+        description: Respawn the EnderDragon
+        default: op
+        aliases: [respawnED]
+        usage: |
+            /<command>
+    nbenderdragon:
+        description: Know how many ED are alive
+        default: op
+        aliases: [nbED]
+        usage: |
+            /<command>
+    regenend:
+        description: Regen the End World
+        default: op
+        aliases: [regend]
+        usage: |
+            /<command>

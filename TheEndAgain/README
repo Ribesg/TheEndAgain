@@ -1,0 +1,9 @@
+TheEndAgain Plugin version for CraftBukkit
+Commands :
+	/respawnenderdragon		=	Respawn the EnderDragon (Alias: /respawnED)
+	/nbenderdragon			= 	Returns the number of ED alive (Alias: /nbED)
+	/regenend				= 	Hot regen of the End world (Alias: /regend)
+Permissions :
+	tea.respawn	= /respawnenderdragon
+	tea.nb		= /nbenderdragon
+	tea.regen	= /regenend
