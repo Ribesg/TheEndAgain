@@ -183,7 +183,7 @@ public class TheEndAgain extends JavaPlugin {
                         TheEndAgain.this.removeEnderDragons(TheEndAgain.this.nbED - TheEndAgain.this.nbMaxEnderDragon);
                     }
                 }
-            }, 0, 20 * 5);
+            }, 20 * 5, 20 * 5);
 
             for (final Entity e : this.endWorld.getEntities()) {
                 if (e instanceof EnderDragon) {
@@ -302,7 +302,7 @@ public class TheEndAgain extends JavaPlugin {
                         TheEndAgain.this.spawnEnderDragonsToActualNumber();
                     }
                 }
-            }, 2 * 20, this.respawnTimer * 60 * 20);
+            }, 5 * 20, this.respawnTimer * 60 * 20);
         } else {
             this.getServer().getScheduler().cancelTask(this.TASK_respawnTimerTask);
             this.TASK_respawnTimerTask = -42;
