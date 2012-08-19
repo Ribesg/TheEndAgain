@@ -3,19 +3,19 @@ package com.github.ribesg.tea.util;
 import org.bukkit.Chunk;
 
 
-public class TEA_Chunk {
+public class ExtendedChunk {
 
     private final int    x, z;
     private final String world;
     private boolean      hasToBeRegen;
 
-    public TEA_Chunk(final int x, final int z, final String world) {
+    public ExtendedChunk(final int x, final int z, final String world) {
         this.x = x;
         this.z = z;
         this.world = world;
     }
 
-    public TEA_Chunk(final Chunk bukkitChunk) {
+    public ExtendedChunk(final Chunk bukkitChunk) {
         this.x = bukkitChunk.getX();
         this.z = bukkitChunk.getZ();
         this.world = bukkitChunk.getWorld().getName();

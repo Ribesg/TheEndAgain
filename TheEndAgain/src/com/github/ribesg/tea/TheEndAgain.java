@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Random;
 import java.util.UUID;
 
@@ -25,17 +24,19 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.github.ribesg.tea.util.TEA_EndChunks;
+import com.github.ribesg.tea.util.EndChunks;
+import com.github.ribesg.tea.util.ExtendedChunk;
 
 
 public class TheEndAgain extends JavaPlugin {
 
     // Headers for plugin messages
-    public String                                 header     = ChatColor.BLACK + "[" + ChatColor.RED + "TheEndAgain" + ChatColor.BLACK + "] " + ChatColor.WHITE;
+    public String                                 header      = ChatColor.BLACK + "[" + ChatColor.RED + "TheEndAgain" + ChatColor.BLACK + "] " + ChatColor.WHITE;
 
     // Config file
-    private final String                          directory  = "plugins" + File.separator + "TheEndAgain";
-    File                                          f_config   = new File(this.directory + File.separator + "config.yml");
+    private final String                          directory   = "plugins" + File.separator + "TheEndAgain";
+    File                                          f_config    = new File(this.directory + File.separator + "config.yml");
+    File                                          f_endChunks = new File(this.directory + File.separator + "endChunks.yml");
     YamlConfiguration                             config;
     public boolean                                regenOnStop, preventPortals;
     public int                                    actionOnRegen, respawnTimer, nbMinEnderDragon, nbMaxEnderDragon, TASK_respawnTimerTask, xpRewardingType, xpReward, actualNbEnderDragon, actualNbPlayerInEndWorld,
@@ -44,11 +45,8 @@ public class TheEndAgain extends JavaPlugin {
     public String[]                               respawnMessages;
     public String[]                               expMessage1, expMessage2;
 
-    // Radius of chunks to be regen
-    public int                                    endSize    = 15;
-
     public World                                  endWorld;
-    public TEA_EndChunks                          endChunks  = new TEA_EndChunks();
+    public EndChunks                              endChunks;
 
     // To store who hit which ED
     public HashMap<UUID, HashMap<String, Double>> data;
@@ -56,8 +54,11 @@ public class TheEndAgain extends JavaPlugin {
     // To store custom ED health
     public HashMap<UUID, Integer>                 edHealth;
 
-    private final TEA_Listener                    listener   = new TEA_Listener(this);
-    private final TEA_CommandExecutor             myExecutor = new TEA_CommandExecutor(this);
+    // Actual number of ED in End
+    public int                                    nbED        = 0;
+
+    private final TEA_Listener                    listener    = new TEA_Listener(this);
+    private final TEA_CommandExecutor             myExecutor  = new TEA_CommandExecutor(this);
 
     @Override
     public void onDisable() {
@@ -70,6 +71,7 @@ public class TheEndAgain extends JavaPlugin {
                 this.getLogger().info("Regenerating the End world...");
                 this.hardRegen();
             }
+            this.endChunks.save(this.f_endChunks);
         }
 
         this.getLogger().info("TheEndAgain successfully disabled.");
@@ -129,6 +131,9 @@ public class TheEndAgain extends JavaPlugin {
             this.xpReward = 0;
             this.getLogger().severe("xpReward should greater than 0. Check config. Value set to 0 !");
         }
+
+        this.regenMessage = this.config.getString("regenMessage");
+
         final String respawnMessagesTmp = this.config.getString("respawnMessages", "");
         this.respawnMessages = respawnMessagesTmp.length() > 0 ? respawnMessagesTmp.split(";") : new String[0];
         this.expMessage1 = this.config.getString("expMessage1", "The EnderDragon died ! You won ").split(";");
@@ -161,6 +166,8 @@ public class TheEndAgain extends JavaPlugin {
             this.getLogger().warning("No End world found ! Nothing will be done.");
             Bukkit.getPluginManager().disablePlugin(this);
         } else {
+            this.endChunks = new EndChunks(this.endWorld);
+            this.endChunks.load(this.f_endChunks);
             this.endWorld.setKeepSpawnInMemory(false);
             this.spawnEnderDragonsToActualNumber();
             this.launchRespawnTask();
@@ -188,16 +195,8 @@ public class TheEndAgain extends JavaPlugin {
         for (final Entity e : this.endWorld.getEntities()) {
             e.remove();
         }
-        final HashSet<Chunk> chunks = new HashSet<Chunk>();
-        for (int x = -10; x < 10; x++) {
-            for (int z = -10; z < 10; z++) {
-                if (!this.endWorld.isChunkLoaded(x, x)) {
-                    this.endWorld.loadChunk(x, z);
-                    chunks.add(this.endWorld.getChunkAt(x, z));
-                }
-            }
-        }
-        for (final Chunk c : chunks) {
+        for (final ExtendedChunk chunk : this.endChunks.getIterableChunks()) {
+            final Chunk c = this.endWorld.getChunkAt(chunk.getX(), chunk.getZ());
             this.endWorld.regenerateChunk(c.getX(), c.getZ());
         }
         this.endWorld.save();
@@ -225,7 +224,8 @@ public class TheEndAgain extends JavaPlugin {
         int dragonNumber = 0;
         int spawned = 0;
         if (this.endWorld != null) {
-            dragonNumber = this.getNbAliveED();
+            this.updateNbAliveED();
+            dragonNumber = this.nbED;
             final Random rand = new Random();
             while (dragonNumber < this.actualNbEnderDragon) {
                 final Location loc = new Location(this.endWorld, rand.nextInt(20) - 10, rand.nextInt(20) + 90, rand.nextInt(20) - 10);
@@ -294,6 +294,9 @@ public class TheEndAgain extends JavaPlugin {
             out.write("#	* 1 = All players in the End world get teleported to first world's spawn\n");
             out.write("actionOnRegen: 0\n\n");
 
+            out.write("#Messages to send when the End regen. Used for broadcast and kick message (actionOnRegen value above)\n");
+            out.write("regenMessage: 'The &cEnd &ais regenerating !'\n\n");
+
             out.write("#The end will be regenerated and ED will respawn every X minutes. Here are some examples :\n");
             out.write("#	* 10   = 10 minutes\n");
             out.write("#	* 60   = 1 hour\n");
@@ -337,23 +340,18 @@ public class TheEndAgain extends JavaPlugin {
         }
     }
 
-    public int getNbAliveED() {
-        int dragonNumber = 0;
+    public void updateNbAliveED() {
+        this.nbED = 0;
         if (this.endWorld != null) {
-            for (int x = -15; x < 15; x++) {
-                for (int z = -15; z < 15; z++) {
-                    if (!this.endWorld.getChunkAt(x, z).isLoaded()) {
-                        this.endWorld.loadChunk(x, z);
-                    }
-                }
+            for (final ExtendedChunk chunk : this.endChunks.getIterableChunks()) {
+                this.endWorld.loadChunk(chunk.getX(), chunk.getZ());
             }
             for (final Entity e : this.endWorld.getEntities()) {
                 if (e.getType() == EntityType.ENDER_DRAGON && ((EnderDragon) e).getHealth() > 0) {
-                    dragonNumber++;
+                    this.nbED++;
                 }
             }
         }
-        return dragonNumber;
     }
 
     public void broadcastSpawned() {

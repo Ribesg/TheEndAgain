@@ -76,7 +76,7 @@ public class TEA_CommandExecutor implements CommandExecutor {
 
     private boolean cmdNb(final CommandSender sender, final String[] args) {
         if (this.plugin.endWorld != null) {
-            final int nb = this.plugin.getNbAliveED();
+            final int nb = this.plugin.nbED;
             if (nb == 0) {
                 sender.sendMessage(this.plugin.header + ChatColor.GREEN + "There is no ED alive. Actual max number is " + this.plugin.actualNbEnderDragon);
                 return true;

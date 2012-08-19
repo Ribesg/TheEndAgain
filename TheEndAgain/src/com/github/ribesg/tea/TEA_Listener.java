@@ -25,7 +25,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.util.Vector;
 
-import com.github.ribesg.tea.util.TEA_Chunk;
+import com.github.ribesg.tea.util.ExtendedChunk;
 
 
 public class TEA_Listener implements Listener {
@@ -159,14 +159,12 @@ public class TEA_Listener implements Listener {
                 }
             }
         }
+        this.plugin.nbED--;
         this.plugin.data.remove(ed.getUniqueId());
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerHitED(final EntityDamageEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
         if (!(event.getEntity() instanceof EnderDragon)) {
             return;
         }
@@ -223,7 +221,7 @@ public class TEA_Listener implements Listener {
         this.plugin.data.put(edId, edData);
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onEDCreatePortal(final EntityCreatePortalEvent event) {
         if (event.getEntityType().equals(EntityType.ENDER_DRAGON) && this.plugin.preventPortals) {
             Block egg = null;
@@ -246,11 +244,11 @@ public class TEA_Listener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onEndChunkLoad(final ChunkLoadEvent event) {
         final Chunk c = event.getChunk();
         if (c.getWorld().equals(this.plugin.endWorld)) {
-            final TEA_Chunk chunk = this.plugin.endChunks.getChunk(c);
+            final ExtendedChunk chunk = this.plugin.endChunks.getChunk(c);
             if (chunk == null) {
                 this.plugin.endChunks.addChunk(c);
             } else if (chunk.hasToBeRegen()) {
@@ -260,11 +258,16 @@ public class TEA_Listener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onEnderDragonSpawn(final CreatureSpawnEvent event) {
-        if (event.getEntity() instanceof EnderDragon) {
-            final EnderDragon ed = (EnderDragon) event.getEntity();
-            this.plugin.edHealth.put(ed.getUniqueId(), this.plugin.enderDragonHealth);
+        if (event.getEntityType() == EntityType.ENDER_DRAGON) {
+            if (this.plugin.nbED >= this.plugin.actualNbEnderDragon) {
+                event.setCancelled(true);
+            } else {
+                final EnderDragon ed = (EnderDragon) event.getEntity();
+                this.plugin.edHealth.put(ed.getUniqueId(), this.plugin.enderDragonHealth);
+                this.plugin.nbED++;
+            }
         }
     }
 
