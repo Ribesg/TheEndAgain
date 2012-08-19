@@ -31,14 +31,14 @@ import com.github.ribesg.tea.util.ExtendedChunk;
 public class TheEndAgain extends JavaPlugin {
 
     // Headers for plugin messages
-    public String                                 header      = ChatColor.BLACK + "[" + ChatColor.RED + "TheEndAgain" + ChatColor.BLACK + "] " + ChatColor.WHITE;
+    public String                                 header      = ChatColor.BLACK + "[" + ChatColor.GREEN + "End" + ChatColor.BLACK + "] " + ChatColor.WHITE;
 
     // Config file
     private final String                          directory   = "plugins" + File.separator + "TheEndAgain";
     File                                          f_config    = new File(this.directory + File.separator + "config.yml");
     File                                          f_endChunks = new File(this.directory + File.separator + "endChunks.yml");
     YamlConfiguration                             config;
-    public boolean                                regenOnStop, preventPortals;
+    public boolean                                regenOnStop, preventPortals, regenOnRespawn;
     public int                                    actionOnRegen, respawnTimer, nbMinEnderDragon, nbMaxEnderDragon, TASK_respawnTimerTask, xpRewardingType, xpReward, actualNbEnderDragon, actualNbPlayerInEndWorld,
     enderDragonHealth;
     public String                                 regenMessage;
@@ -98,7 +98,8 @@ public class TheEndAgain extends JavaPlugin {
         if (!this.config.getBoolean("useTEAPrefix", true)) {
             this.header = "";
         }
-        this.regenOnStop = this.config.getBoolean("regenOnStop", false);
+        this.regenOnStop = this.config.getBoolean("regenOnStop", true);
+        this.regenOnStop = this.config.getBoolean("regenOnRespawn", false);
         this.actionOnRegen = this.config.getInt("actionOnRegen", 0);
         if (this.actionOnRegen != 0 && this.actionOnRegen != 1) {
             this.getLogger().severe("actionOnRegen should be 0 or 1. Check config. Value set to 0 !");
@@ -218,6 +219,7 @@ public class TheEndAgain extends JavaPlugin {
             c.unload();
         }
         this.endChunks.regen();
+        this.spawnEnderDragonsToActualNumber();
     }
 
     public int spawnEnderDragonsToActualNumber() {
@@ -248,7 +250,11 @@ public class TheEndAgain extends JavaPlugin {
                 @Override
                 public void run() {
                     TheEndAgain.this.newActualNumber();
-                    TheEndAgain.this.spawnEnderDragonsToActualNumber();
+                    if (TheEndAgain.this.regenOnRespawn) {
+                        TheEndAgain.this.softRegen();
+                    } else { // The softRegen() method also call spawnEnderDragonsToActualNumber() so we don't have to call it if regenOnRespawn
+                        TheEndAgain.this.spawnEnderDragonsToActualNumber();
+                    }
                 }
             }, 2 * 20, this.respawnTimer * 60 * 20);
         } else {
@@ -279,6 +285,9 @@ public class TheEndAgain extends JavaPlugin {
             } else if (!this.config.isSet("useTEAPrefix")) {
                 // Old config
                 this.newConfig();
+            } else if (!this.config.isSet("regenOnRespawn")) {
+                // Old config
+                this.newConfig();
             }
         }
     }
@@ -293,7 +302,10 @@ public class TheEndAgain extends JavaPlugin {
             out.write("useTEAPrefix: true\n\n");
 
             out.write("#Should we regen the End world at server stop ? Yes=true, No=false\n");
-            out.write("regenOnStop: false\n\n");
+            out.write("regenOnStop: true\n\n");
+
+            out.write("#Should we regen the End world when respawning EnderDragons ? Yes=true, No=false\n");
+            out.write("regenOnRespawn: false\n\n");
 
             out.write("#What should we do if there are players in the End world on regen ?\n");
             out.write("#	* 0 = All players in the End world get kicked, so they can rejoin directly in the End after restart <= Default Value\n");
