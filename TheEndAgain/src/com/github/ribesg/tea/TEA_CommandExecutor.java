@@ -47,7 +47,7 @@ public class TEA_CommandExecutor implements CommandExecutor {
     private void denied(final CommandSender sender) {
         // Unfortunately, the sender does not have the permission to use that
         // command...
-        sender.sendMessage(this.plugin.messagesPrefix ? this.plugin.header : "" + ChatColor.RED + "Sorry but you do not have the permission to use that command.");
+        sender.sendMessage(this.plugin.header + ChatColor.RED + "Sorry but you do not have the permission to use that command.");
     }
 
     private boolean cmdRespawn(final CommandSender sender, final String[] args) {
@@ -58,17 +58,17 @@ public class TEA_CommandExecutor implements CommandExecutor {
             if (this.plugin.endWorld != null) {
                 final int nb = this.plugin.spawnEnderDragonsToActualNumber();
                 if (nb == 0) {
-                    sender.sendMessage(this.plugin.messagesPrefix ? this.plugin.header : "" + ChatColor.RED + "Reached the actual maximum number of EnderDragons !");
+                    sender.sendMessage(this.plugin.header + ChatColor.RED + "Reached the actual maximum number of EnderDragons !");
                     return true;
                 } else if (nb == 1) {
-                    sender.sendMessage(this.plugin.messagesPrefix ? this.plugin.header : "" + ChatColor.GREEN + "Spawned 1 EnderDragon !");
+                    sender.sendMessage(this.plugin.header + ChatColor.GREEN + "Spawned 1 EnderDragon !");
                     return true;
                 } else {
-                    sender.sendMessage(this.plugin.messagesPrefix ? this.plugin.header : "" + ChatColor.GREEN + "Spawned " + nb + " EnderDragons !");
+                    sender.sendMessage(this.plugin.header + ChatColor.GREEN + "Spawned " + nb + " EnderDragons !");
                     return true;
                 }
             } else {
-                sender.sendMessage(this.plugin.messagesPrefix ? this.plugin.header : "" + ChatColor.RED + "There is no End world !");
+                sender.sendMessage(this.plugin.header + ChatColor.RED + "There is no End world !");
                 return true;
             }
         }
@@ -78,17 +78,17 @@ public class TEA_CommandExecutor implements CommandExecutor {
         if (this.plugin.endWorld != null) {
             final int nb = this.plugin.nbED;
             if (nb == 0) {
-                sender.sendMessage(this.plugin.messagesPrefix ? this.plugin.header : "" + ChatColor.GREEN + "There is no ED alive. Actual max number is " + this.plugin.actualNbEnderDragon);
+                sender.sendMessage(this.plugin.header + ChatColor.GREEN + "There is no ED alive. Actual max number is " + this.plugin.actualNbEnderDragon);
                 return true;
             } else if (nb == 1) {
-                sender.sendMessage(this.plugin.messagesPrefix ? this.plugin.header : "" + ChatColor.GREEN + "There is 1 ED alive. Actual max number is " + this.plugin.actualNbEnderDragon);
+                sender.sendMessage(this.plugin.header + ChatColor.GREEN + "There is 1 ED alive. Actual max number is " + this.plugin.actualNbEnderDragon);
                 return true;
             } else {
-                sender.sendMessage(this.plugin.messagesPrefix ? this.plugin.header : "" + ChatColor.GREEN + "There are " + nb + " EDs alive. Actual max number is " + this.plugin.actualNbEnderDragon);
+                sender.sendMessage(this.plugin.header + ChatColor.GREEN + "There are " + nb + " EDs alive. Actual max number is " + this.plugin.actualNbEnderDragon);
                 return true;
             }
         } else {
-            sender.sendMessage(this.plugin.messagesPrefix ? this.plugin.header : "" + ChatColor.RED + "There is no End world !");
+            sender.sendMessage(this.plugin.header + ChatColor.RED + "There is no End world !");
             return true;
         }
     }
@@ -98,7 +98,7 @@ public class TEA_CommandExecutor implements CommandExecutor {
             this.plugin.softRegen();
             return true;
         } else {
-            sender.sendMessage(this.plugin.messagesPrefix ? this.plugin.header : "" + ChatColor.RED + "There is no End world !");
+            sender.sendMessage(this.plugin.header + ChatColor.RED + "There is no End world !");
             return true;
         }
     }

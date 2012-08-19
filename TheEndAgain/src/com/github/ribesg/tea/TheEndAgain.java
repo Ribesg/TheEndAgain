@@ -38,7 +38,7 @@ public class TheEndAgain extends JavaPlugin {
     File                                          f_config    = new File(this.directory + File.separator + "config.yml");
     File                                          f_endChunks = new File(this.directory + File.separator + "endChunks.yml");
     YamlConfiguration                             config;
-    public boolean                                regenOnStop, preventPortals, messagesPrefix;
+    public boolean                                regenOnStop, preventPortals;
     public int                                    actionOnRegen, respawnTimer, nbMinEnderDragon, nbMaxEnderDragon, TASK_respawnTimerTask, xpRewardingType, xpReward, actualNbEnderDragon, actualNbPlayerInEndWorld,
     enderDragonHealth;
     public String                                 regenMessage;
@@ -133,7 +133,6 @@ public class TheEndAgain extends JavaPlugin {
         }
 
         this.regenMessage = this.config.getString("regenMessage");
-        this.messagesPrefix = this.config.getBoolean("messagesPrefix", true);
 
         final String respawnMessagesTmp = this.config.getString("respawnMessages", "");
         this.respawnMessages = respawnMessagesTmp.length() > 0 ? respawnMessagesTmp.split(";") : new String[0];
@@ -277,7 +276,7 @@ public class TheEndAgain extends JavaPlugin {
             if (this.config.isSet("respawnType")) {
                 // Old config
                 this.newConfig();
-            } else if (!this.config.isSet("messagesPrefix")) {
+            } else if (!this.config.isSet("useTEAPrefix")) {
                 // Old config
                 this.newConfig();
             }
@@ -291,7 +290,7 @@ public class TheEndAgain extends JavaPlugin {
             final BufferedWriter out = new BufferedWriter(fstream);
 
             out.write("#Should we use the [TheEndAgain] prefix in messages ? Yes=true, No=false\n");
-            out.write("messagesPrefix: true\n\n");
+            out.write("useTEAPrefix: true\n\n");
 
             out.write("#Should we regen the End world at server stop ? Yes=true, No=false\n");
             out.write("regenOnStop: false\n\n");
@@ -363,7 +362,7 @@ public class TheEndAgain extends JavaPlugin {
 
     public void broadcastSpawned() {
         for (final String s : this.respawnMessages) {
-            this.getServer().broadcastMessage(this.messagesPrefix ? this.header : "" + ChatColor.GREEN + this.toColor(s));
+            this.getServer().broadcastMessage(this.header + ChatColor.GREEN + this.toColor(s));
         }
     }
 
