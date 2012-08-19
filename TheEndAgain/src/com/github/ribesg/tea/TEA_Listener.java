@@ -148,12 +148,12 @@ public class TEA_Listener implements Listener {
                         final double expToGive = this.plugin.xpReward * (edData.get(s) / totalDmg);
                         p.giveExp((int) expToGive);
                         for (int i = 0; i < this.plugin.expMessage1.length - 1; i++) {
-                            p.sendMessage(this.plugin.header + ChatColor.GREEN + this.plugin.toColor(this.plugin.expMessage1[i]));
+                            p.sendMessage(this.plugin.messagesPrefix ? this.plugin.header : "" + ChatColor.GREEN + this.plugin.toColor(this.plugin.expMessage1[i]));
                         }
                         p.sendMessage(this.plugin.header + ChatColor.GREEN + this.plugin.toColor(this.plugin.expMessage1[this.plugin.expMessage1.length - 1]) + (int) expToGive
                                 + this.plugin.toColor(this.plugin.expMessage2[0]));
                         for (int i = 1; i < this.plugin.expMessage2.length; i++) {
-                            p.sendMessage(this.plugin.header + ChatColor.GREEN + this.plugin.toColor(this.plugin.expMessage2[i]));
+                            p.sendMessage(this.plugin.messagesPrefix ? this.plugin.header : "" + ChatColor.GREEN + this.plugin.toColor(this.plugin.expMessage2[i]));
                         }
                     }
                 }
