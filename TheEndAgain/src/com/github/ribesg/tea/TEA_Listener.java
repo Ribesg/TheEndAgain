@@ -6,10 +6,12 @@ import java.util.UUID;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.EnderDragon;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -248,17 +250,37 @@ public class TEA_Listener implements Listener {
     public void onEndChunkLoad(final ChunkLoadEvent event) {
         final Chunk c = event.getChunk();
         if (c.getWorld().equals(this.plugin.endWorld)) {
-            final ExtendedChunk chunk = this.plugin.endChunks.getChunk(c);
+            ExtendedChunk chunk = this.plugin.endChunks.getChunk(c);
+            boolean regen = false;
             if (chunk == null) {
-                this.plugin.endChunks.addChunk(c);
+                regen = true;
+                chunk = this.plugin.endChunks.addChunk(c);
             } else if (chunk.hasToBeRegen()) {
-                this.plugin.endWorld.regenerateChunk(chunk.getX(), chunk.getZ());
+                regen = true;
+            }
+            if (regen) {
+                // Prevent existing EnderDragons to be deleted by regen
+                int teleportDestX = 0;
+                int teleportDestZ = 0;
+                if (chunk.getX() == 0 && chunk.getZ() == 0) {
+                    teleportDestX = 20;
+                    teleportDestZ = 20;
+                }
+                final Location teleportDest = new Location(this.plugin.endWorld, teleportDestX, 90, teleportDestZ);
+                for (final Entity e : c.getEntities()) {
+                    if (e.getType() == EntityType.ENDER_DRAGON && ((EnderDragon) e).getHealth() > 0) {
+                        e.teleport(teleportDest);
+                    }
+                }
+                // Now regen
+                this.plugin.endWorld.regenerateChunk(c.getX(), c.getZ());
+                this.plugin.endWorld.refreshChunk(c.getX(), c.getZ());
                 chunk.setToBeRegen(false);
             }
         }
     }
 
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEnderDragonSpawn(final CreatureSpawnEvent event) {
         if (event.getEntityType() == EntityType.ENDER_DRAGON) {
             if (this.plugin.nbED >= this.plugin.actualNbEnderDragon) {

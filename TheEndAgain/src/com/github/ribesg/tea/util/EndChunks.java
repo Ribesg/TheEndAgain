@@ -25,9 +25,11 @@ public class EndChunks {
         this.chunks.put(coords, chunk);
     }
 
-    public void addChunk(final Chunk c) {
+    public ExtendedChunk addChunk(final Chunk c) {
         final String coords = new StringBuffer().append(c.getX()).append(';').append(c.getZ()).toString();
-        this.chunks.put(coords, new ExtendedChunk(c));
+        final ExtendedChunk chunk = new ExtendedChunk(c);
+        this.chunks.put(coords, chunk);
+        return chunk;
     }
 
     public ExtendedChunk getChunk(final int x, final int z) {

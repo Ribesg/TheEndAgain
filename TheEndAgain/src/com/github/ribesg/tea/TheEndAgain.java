@@ -7,6 +7,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -39,8 +41,7 @@ public class TheEndAgain extends JavaPlugin {
     File                                          f_endChunks = new File(this.directory + File.separator + "endChunks.yml");
     YamlConfiguration                             config;
     public boolean                                regenOnStop, preventPortals, regenOnRespawn;
-    public int                                    actionOnRegen, respawnTimer, nbMinEnderDragon, nbMaxEnderDragon, TASK_respawnTimerTask, xpRewardingType, xpReward, actualNbEnderDragon, actualNbPlayerInEndWorld,
-    enderDragonHealth;
+    public int                                    actionOnRegen, respawnTimer, nbMinEnderDragon, nbMaxEnderDragon, TASK_respawnTimerTask, xpRewardingType, xpReward, actualNbEnderDragon, enderDragonHealth;
     public String                                 regenMessage;
     public String[]                               respawnMessages;
     public String[]                               expMessage1, expMessage2;
@@ -82,7 +83,6 @@ public class TheEndAgain extends JavaPlugin {
         // Method called when the server starts
         this.data = new HashMap<UUID, HashMap<String, Double>>();
         this.edHealth = new HashMap<UUID, Integer>();
-        this.actualNbPlayerInEndWorld = 0;
 
         // Loading config
         this.checkConfig();
@@ -173,6 +173,18 @@ public class TheEndAgain extends JavaPlugin {
             this.spawnEnderDragonsToActualNumber();
             this.launchRespawnTask();
 
+            // Task which check if there is not too much Dragons
+            Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+
+                @Override
+                public void run() {
+                    TheEndAgain.this.updateNbAliveED();
+                    if (TheEndAgain.this.nbED > TheEndAgain.this.actualNbEnderDragon) {
+                        TheEndAgain.this.removeEnderDragons(TheEndAgain.this.nbED - TheEndAgain.this.nbMaxEnderDragon);
+                    }
+                }
+            }, 0, 20 * 5);
+
             for (final Entity e : this.endWorld.getEntities()) {
                 if (e instanceof EnderDragon) {
                     final EnderDragon ed = (EnderDragon) e;
@@ -180,6 +192,7 @@ public class TheEndAgain extends JavaPlugin {
                     this.edHealth.put(ed.getUniqueId(), this.enderDragonHealth);
                 }
             }
+
         }
         this.getLogger().info("TheEndAgain successfully enabled.");
     }
@@ -204,6 +217,10 @@ public class TheEndAgain extends JavaPlugin {
     }
 
     public void softRegen() {
+        for (final Entity e : this.endWorld.getEntities()) {
+            e.remove();
+        }
+        this.nbED = 0;
         for (final Player p : this.endWorld.getPlayers()) {
             if (this.actionOnRegen == 0) {
                 p.kickPlayer(this.header + ChatColor.GREEN + this.toColor(this.regenMessage));
@@ -212,17 +229,26 @@ public class TheEndAgain extends JavaPlugin {
                 p.sendMessage(this.header + ChatColor.GREEN + this.toColor(this.regenMessage));
             }
         }
-        for (final Entity e : this.endWorld.getEntities()) {
-            e.remove();
-        }
         for (final Chunk c : this.endWorld.getLoadedChunks()) {
             c.unload();
         }
         this.endChunks.regen();
+        Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+
+            @Override
+            public void run() {
+                TheEndAgain.this.spawnEnderDragonsToActualNumber();
+            }
+        }, 20 * 5);
         this.spawnEnderDragonsToActualNumber();
     }
 
     public int spawnEnderDragonsToActualNumber() {
+        for (int x = -3; x <= 3; x++) {
+            for (int z = -3; z <= 3; z++) {
+                this.endWorld.loadChunk(x, z);
+            }
+        }
         int dragonNumber = 0;
         int spawned = 0;
         if (this.endWorld != null) {
@@ -232,7 +258,9 @@ public class TheEndAgain extends JavaPlugin {
             while (dragonNumber < this.actualNbEnderDragon) {
                 final Location loc = new Location(this.endWorld, rand.nextInt(20) - 10, rand.nextInt(20) + 90, rand.nextInt(20) - 10);
                 loc.getChunk().load();
-                this.endWorld.spawnEntity(loc, EntityType.ENDER_DRAGON);
+                while (this.endWorld.spawnEntity(loc, EntityType.ENDER_DRAGON) == null) {
+                    ;
+                }
                 dragonNumber++;
                 spawned++;
             }
@@ -241,6 +269,24 @@ public class TheEndAgain extends JavaPlugin {
             this.broadcastSpawned();
         }
         return spawned;
+    }
+
+    protected void removeEnderDragons(final int quantity) {
+        // Delete the farthest first
+        final SortedMap<Double, EnderDragon> dragons = new TreeMap<Double, EnderDragon>();
+        for (final Entity e : this.endWorld.getEntities()) {
+            if (e.getType() == EntityType.ENDER_DRAGON && ((EnderDragon) e).getHealth() > 0) {
+                dragons.put(e.getLocation().lengthSquared(), (EnderDragon) e);
+            }
+        }
+        final int deletedEDs = 0;
+        while (deletedEDs < quantity && dragons.size() > 0) {
+            final EnderDragon e = dragons.get(dragons.lastKey());
+            this.data.remove(e.getUniqueId());
+            e.remove();
+            dragons.remove(dragons.lastKey());
+        }
+
     }
 
     public void launchRespawnTask() {
@@ -361,9 +407,6 @@ public class TheEndAgain extends JavaPlugin {
     public void updateNbAliveED() {
         this.nbED = 0;
         if (this.endWorld != null) {
-            for (final ExtendedChunk chunk : this.endChunks.getIterableChunks()) {
-                this.endWorld.loadChunk(chunk.getX(), chunk.getZ());
-            }
             for (final Entity e : this.endWorld.getEntities()) {
                 if (e.getType() == EntityType.ENDER_DRAGON && ((EnderDragon) e).getHealth() > 0) {
                     this.nbED++;
