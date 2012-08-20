@@ -76,7 +76,7 @@ public class EndChunks {
                             final String[] split = coord.split(";");
                             final int x = Integer.parseInt(split[0]);
                             final int z = Integer.parseInt(split[1]);
-                            this.chunks.put(coord, new ExtendedChunk(this.endWorld.getChunkAt(x, z)));
+                            this.chunks.put(coord, new ExtendedChunk(x, z, this.endWorld.getName()));
                         } catch (final Exception e) {
                             e.printStackTrace();
                         }

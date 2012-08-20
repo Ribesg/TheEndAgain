@@ -40,8 +40,9 @@ public class TheEndAgain extends JavaPlugin {
     File                                          f_config    = new File(this.directory + File.separator + "config.yml");
     File                                          f_endChunks = new File(this.directory + File.separator + "endChunks.yml");
     YamlConfiguration                             config;
-    public boolean                                regenOnStop, preventPortals, regenOnRespawn;
-    public int                                    actionOnRegen, respawnTimer, nbMinEnderDragon, nbMaxEnderDragon, TASK_respawnTimerTask, xpRewardingType, xpReward, actualNbEnderDragon, enderDragonHealth;
+    public boolean                                regenOnStop, regenOnRespawn;
+    public int                                    actionOnRegen, respawnTimer, nbMinEnderDragon, nbMaxEnderDragon, TASK_respawnTimerTask, xpRewardingType, xpReward, actualNbEnderDragon, enderDragonHealth,
+    preventPortals;
     public String                                 regenMessage;
     public String[]                               respawnMessages;
     public String[]                               expMessage1, expMessage2;
@@ -141,7 +142,7 @@ public class TheEndAgain extends JavaPlugin {
         this.expMessage1 = this.config.getString("expMessage1", "The EnderDragon died ! You won ").split(";");
         this.expMessage2 = this.config.getString("expMessage2", " exp !").split(";");
 
-        this.preventPortals = this.config.getBoolean("preventPortals", false);
+        this.preventPortals = this.config.getInt("preventPortals", 0);
         this.enderDragonHealth = this.config.getInt("enderDragonHealth", 200);
         if (this.enderDragonHealth < 1) {
             this.enderDragonHealth = 200;
@@ -426,8 +427,11 @@ public class TheEndAgain extends JavaPlugin {
             out.write("#Change the health value of the EnderDragon. Default = 200\n");
             out.write("enderDragonHealth: 200\n\n");
 
-            out.write("#Prevent EnderDragon from creating portals on Death ? Yes=true, No=false\n");
-            out.write("preventPortals: false\n\n");
+            out.write("#Prevent EnderDragon from creating portals on Death ?\n");
+            out.write("#    * 0    = Disabled - portal will spawn normally. Removes any obsidian tower who could block it.\n");
+            out.write("#    * 1    = Egg      - portal will be removed but DragonEgg still spawn. Also removes obsi tower.\n");
+            out.write("#    * 2    = Enabled  - portal will not spawn. No more cuted obsidian towers. No Egg.\n");
+            out.write("preventPortals: 0\n\n");
             out.close();
             this.getLogger().info("config.yml generated, please see plugins/TheEndAgain/config.yml !");
         } catch (final Exception ex) {

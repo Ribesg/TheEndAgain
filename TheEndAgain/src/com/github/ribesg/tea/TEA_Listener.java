@@ -225,23 +225,27 @@ public class TEA_Listener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onEDCreatePortal(final EntityCreatePortalEvent event) {
-        if (event.getEntityType().equals(EntityType.ENDER_DRAGON) && this.plugin.preventPortals) {
-            Block egg = null;
-            for (final BlockState b : event.getBlocks()) {
-                if (!b.getType().equals(Material.DRAGON_EGG)) {
-                    b.setType(Material.AIR);
-                } else {
-                    egg = b.getBlock();
-                }
-            }
-            if (egg != null) {
-                final int chunkX = egg.getChunk().getX();
-                final int chunkZ = egg.getChunk().getZ();
-                for (int x = chunkX - 2; x <= chunkX + 2; x++) {
-                    for (int z = chunkZ - 2; z <= chunkZ + 2; z++) {
-                        this.plugin.endWorld.refreshChunk(x, z);
+        if (event.getEntityType().equals(EntityType.ENDER_DRAGON)) {
+            if (this.plugin.preventPortals == 1) {
+                Block egg = null;
+                for (final BlockState b : event.getBlocks()) {
+                    if (!b.getType().equals(Material.DRAGON_EGG)) {
+                        b.setType(Material.AIR);
+                    } else {
+                        egg = b.getBlock();
                     }
                 }
+                if (egg != null) {
+                    final int chunkX = egg.getChunk().getX();
+                    final int chunkZ = egg.getChunk().getZ();
+                    for (int x = chunkX - 2; x <= chunkX + 2; x++) {
+                        for (int z = chunkZ - 2; z <= chunkZ + 2; z++) {
+                            this.plugin.endWorld.refreshChunk(x, z);
+                        }
+                    }
+                }
+            } else if (this.plugin.preventPortals == 2) {
+                event.setCancelled(true);
             }
         }
     }
@@ -265,6 +269,8 @@ public class TEA_Listener implements Listener {
                 for (final Entity e : c.getEntities()) {
                     if (e.getType() == EntityType.ENDER_DRAGON && ((EnderDragon) e).getHealth() > 0) {
                         e.teleport(teleportDest);
+                    } else if (e.getType() != EntityType.ENDER_DRAGON) {
+                        e.remove();
                     }
                 }
                 // Now regen
@@ -287,5 +293,4 @@ public class TEA_Listener implements Listener {
             }
         }
     }
-
 }
