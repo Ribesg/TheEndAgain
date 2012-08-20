@@ -251,14 +251,9 @@ public class TEA_Listener implements Listener {
         final Chunk c = event.getChunk();
         if (c.getWorld().equals(this.plugin.endWorld)) {
             ExtendedChunk chunk = this.plugin.endChunks.getChunk(c);
-            boolean regen = false;
             if (chunk == null) {
-                regen = true;
                 chunk = this.plugin.endChunks.addChunk(c);
             } else if (chunk.hasToBeRegen()) {
-                regen = true;
-            }
-            if (regen) {
                 // Prevent existing EnderDragons to be deleted by regen
                 int teleportDestX = 0;
                 int teleportDestZ = 0;

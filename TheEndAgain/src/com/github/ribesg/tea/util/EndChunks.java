@@ -73,10 +73,10 @@ public class EndChunks {
                 if (endChunks.isList("chunks")) {
                     for (final String coord : endChunks.getStringList("chunks")) {
                         try {
-                            final int x = Integer.parseInt(coord.split(";")[0]);
-                            final int z = Integer.parseInt(coord.split(";")[1]);
-                            final Chunk c = this.endWorld.getChunkAt(x, z);
-                            this.chunks.put(coord, new ExtendedChunk(c));
+                            final String[] split = coord.split(";");
+                            final int x = Integer.parseInt(split[0]);
+                            final int z = Integer.parseInt(split[1]);
+                            this.chunks.put(coord, new ExtendedChunk(this.endWorld.getChunkAt(x, z)));
                         } catch (final Exception e) {
                             e.printStackTrace();
                         }

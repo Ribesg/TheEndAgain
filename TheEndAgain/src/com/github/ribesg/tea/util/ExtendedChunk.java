@@ -13,12 +13,14 @@ public class ExtendedChunk {
         this.x = x;
         this.z = z;
         this.world = world;
+        this.hasToBeRegen = false;
     }
 
     public ExtendedChunk(final Chunk bukkitChunk) {
         this.x = bukkitChunk.getX();
         this.z = bukkitChunk.getZ();
         this.world = bukkitChunk.getWorld().getName();
+        this.hasToBeRegen = false;
     }
 
     public boolean hasToBeRegen() {

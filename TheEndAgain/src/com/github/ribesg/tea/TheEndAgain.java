@@ -69,8 +69,9 @@ public class TheEndAgain extends JavaPlugin {
             this.getLogger().warning("No End world found ! Nothing will be down.");
         } else {
             if (this.regenOnStop) {
-                this.getLogger().info("Regenerating the End world...");
                 this.hardRegen();
+            } else {
+                this.getLogger().info("Regen on Stop disabled, nothing to do.");
             }
             this.endChunks.save(this.f_endChunks);
         }
@@ -99,7 +100,7 @@ public class TheEndAgain extends JavaPlugin {
             this.header = "";
         }
         this.regenOnStop = this.config.getBoolean("regenOnStop", true);
-        this.regenOnStop = this.config.getBoolean("regenOnRespawn", false);
+        this.regenOnRespawn = this.config.getBoolean("regenOnRespawn", false);
         this.actionOnRegen = this.config.getInt("actionOnRegen", 0);
         if (this.actionOnRegen != 0 && this.actionOnRegen != 1) {
             this.getLogger().severe("actionOnRegen should be 0 or 1. Check config. Value set to 0 !");
@@ -168,10 +169,23 @@ public class TheEndAgain extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this);
         } else {
             this.endChunks = new EndChunks(this.endWorld);
-            this.endChunks.load(this.f_endChunks);
+
+            // Creating all thoses objects is a bit long, dn't block the main thread for that.
+            Bukkit.getScheduler().scheduleAsyncDelayedTask(this, new Runnable() {
+
+                @Override
+                public void run() {
+                    synchronized (TheEndAgain.this.endChunks) {
+                        TheEndAgain.this.endChunks.load(TheEndAgain.this.f_endChunks);
+                    }
+                }
+            });
             this.endWorld.setKeepSpawnInMemory(false);
-            this.spawnEnderDragonsToActualNumber();
-            this.launchRespawnTask();
+            if (this.respawnTimer == 0) {
+                this.spawnEnderDragonsToActualNumber();
+            } else {
+                this.launchRespawnTask();
+            }
 
             // Task which check if there is not too much Dragons
             Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
@@ -198,6 +212,7 @@ public class TheEndAgain extends JavaPlugin {
     }
 
     public void hardRegen() {
+        this.getLogger().info("Hard Regen - Taking out the players...");
         for (final Player p : this.endWorld.getPlayers()) {
             if (this.actionOnRegen == 0) {
                 p.kickPlayer(this.header + ChatColor.GREEN + this.toColor(this.regenMessage));
@@ -206,21 +221,23 @@ public class TheEndAgain extends JavaPlugin {
                 p.teleport(this.getServer().getWorlds().get(0).getSpawnLocation(), TeleportCause.PLUGIN);
             }
         }
+        this.getLogger().info("Hard Regen - Removing entities...");
         for (final Entity e : this.endWorld.getEntities()) {
             e.remove();
         }
+        this.getLogger().info("Hard Regen - Regenerating...");
         for (final ExtendedChunk chunk : this.endChunks.getIterableChunks()) {
             final Chunk c = this.endWorld.getChunkAt(chunk.getX(), chunk.getZ());
             this.endWorld.regenerateChunk(c.getX(), c.getZ());
         }
+        this.getLogger().info("Hard Regen - Saving...");
         this.endWorld.save();
+        this.getLogger().info("Hard Regen - Done !");
     }
 
     public void softRegen() {
-        for (final Entity e : this.endWorld.getEntities()) {
-            e.remove();
-        }
         this.nbED = 0;
+        this.getLogger().info("Soft Regen - Taking out the players...");
         for (final Player p : this.endWorld.getPlayers()) {
             if (this.actionOnRegen == 0) {
                 p.kickPlayer(this.header + ChatColor.GREEN + this.toColor(this.regenMessage));
@@ -229,18 +246,26 @@ public class TheEndAgain extends JavaPlugin {
                 p.sendMessage(this.header + ChatColor.GREEN + this.toColor(this.regenMessage));
             }
         }
+        this.getLogger().info("Soft Regen - Removing entities...");
+        for (final Entity e : this.endWorld.getEntities()) {
+            e.remove();
+        }
+        this.getLogger().info("Soft Regen - Unloading chunks...");
         for (final Chunk c : this.endWorld.getLoadedChunks()) {
             c.unload();
         }
+        this.getLogger().info("Soft Regen - Flag chunks as to-be-regen-on-reload...");
         this.endChunks.regen();
+        this.getLogger().info("Soft Regen - Chunks flagged. Waiting...");
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 
             @Override
             public void run() {
+                TheEndAgain.this.getLogger().info("Soft Regen - Respawning EDs...");
                 TheEndAgain.this.spawnEnderDragonsToActualNumber();
+                TheEndAgain.this.getLogger().info("Soft Regen - EDs respawned !");
             }
-        }, 20 * 5);
-        this.spawnEnderDragonsToActualNumber();
+        }, 20 * 3);
     }
 
     public int spawnEnderDragonsToActualNumber() {
@@ -258,8 +283,14 @@ public class TheEndAgain extends JavaPlugin {
             while (dragonNumber < this.actualNbEnderDragon) {
                 final Location loc = new Location(this.endWorld, rand.nextInt(20) - 10, rand.nextInt(20) + 90, rand.nextInt(20) - 10);
                 loc.getChunk().load();
-                while (this.endWorld.spawnEntity(loc, EntityType.ENDER_DRAGON) == null) {
-                    ;
+                if (this.endWorld.spawnEntity(loc, EntityType.ENDER_DRAGON) == null) {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+
+                        @Override
+                        public void run() {
+                            TheEndAgain.this.endWorld.spawnEntity(loc, EntityType.ENDER_DRAGON);
+                        }
+                    }, 20 * 5);
                 }
                 dragonNumber++;
                 spawned++;
@@ -290,23 +321,25 @@ public class TheEndAgain extends JavaPlugin {
     }
 
     public void launchRespawnTask() {
-        if (this.TASK_respawnTimerTask == -42) {
-            this.TASK_respawnTimerTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+        if (this.respawnTimer != 0) {
+            if (this.TASK_respawnTimerTask == -42) {
+                this.TASK_respawnTimerTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
 
-                @Override
-                public void run() {
-                    TheEndAgain.this.newActualNumber();
-                    if (TheEndAgain.this.regenOnRespawn) {
-                        TheEndAgain.this.softRegen();
-                    } else { // The softRegen() method also call spawnEnderDragonsToActualNumber() so we don't have to call it if regenOnRespawn
-                        TheEndAgain.this.spawnEnderDragonsToActualNumber();
+                    @Override
+                    public void run() {
+                        TheEndAgain.this.newActualNumber();
+                        if (TheEndAgain.this.regenOnRespawn) {
+                            TheEndAgain.this.softRegen();
+                        } else { // The softRegen() method also call spawnEnderDragonsToActualNumber() so we don't have to call it if regenOnRespawn
+                            TheEndAgain.this.spawnEnderDragonsToActualNumber();
+                        }
                     }
-                }
-            }, 5 * 20, this.respawnTimer * 60 * 20);
-        } else {
-            this.getServer().getScheduler().cancelTask(this.TASK_respawnTimerTask);
-            this.TASK_respawnTimerTask = -42;
-            this.launchRespawnTask();
+                }, 10 * 20, this.respawnTimer * 60 * 20);
+            } else {
+                this.getServer().getScheduler().cancelTask(this.TASK_respawnTimerTask);
+                this.TASK_respawnTimerTask = -42;
+                this.launchRespawnTask();
+            }
         }
     }
 
@@ -325,13 +358,7 @@ public class TheEndAgain extends JavaPlugin {
             } catch (final InvalidConfigurationException e1) {
                 e1.printStackTrace();
             }
-            if (this.config.isSet("respawnType")) {
-                // Old config
-                this.newConfig();
-            } else if (!this.config.isSet("useTEAPrefix")) {
-                // Old config
-                this.newConfig();
-            } else if (!this.config.isSet("regenOnRespawn")) {
+            if (!this.config.isSet("pluginVersion") || !this.config.getString("pluginVersion").equals(this.getDescription().getVersion())) {
                 // Old config
                 this.newConfig();
             }
@@ -343,6 +370,9 @@ public class TheEndAgain extends JavaPlugin {
             this.f_config.createNewFile();
             final FileWriter fstream = new FileWriter(this.f_config);
             final BufferedWriter out = new BufferedWriter(fstream);
+
+            out.write("#Version of the plugin, DO NOT CHANGE THIS VALUE !\n");
+            out.write("pluginVersion: " + this.getDescription().getVersion() + "\n\n");
 
             out.write("#Should we use the [TheEndAgain] prefix in messages ? Yes=true, No=false\n");
             out.write("useTEAPrefix: true\n\n");
@@ -362,6 +392,7 @@ public class TheEndAgain extends JavaPlugin {
             out.write("regenMessage: 'The &cEnd &ais regenerating !'\n\n");
 
             out.write("#The end will be regenerated and ED will respawn every X minutes. Here are some examples :\n");
+            out.write("#	* 0    = Disabled\n");
             out.write("#	* 10   = 10 minutes\n");
             out.write("#	* 60   = 1 hour\n");
             out.write("#	* 240  = 4 hours (6 times per day)\n");
