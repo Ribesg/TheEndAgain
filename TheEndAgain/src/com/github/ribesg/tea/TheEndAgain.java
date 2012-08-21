@@ -151,9 +151,7 @@ public class TheEndAgain extends JavaPlugin {
 
         this.TASK_respawnTimerTask = -42;
 
-        this.getCommand("respawnenderdragon").setExecutor(this.myExecutor);
-        this.getCommand("nbenderdragon").setExecutor(this.myExecutor);
-        this.getCommand("regenend").setExecutor(this.myExecutor);
+        this.getCommand("end").setExecutor(this.myExecutor);
 
         // Registering events, if needed
         this.getServer().getPluginManager().registerEvents(this.listener, this);
@@ -368,6 +366,21 @@ public class TheEndAgain extends JavaPlugin {
 
     public void newConfig() {
         try {
+            boolean update = false;
+            // Try to load old config to prevent erasing everything
+            try {
+                if (this.f_config.exists()) {
+                    this.config = new YamlConfiguration();
+                    this.config.load(this.f_config);
+                    update = true;
+                } else {
+                    this.config = new YamlConfiguration();
+                    update = false;
+                }
+            } catch (final Exception e) {
+                this.config = new YamlConfiguration();
+                update = false;
+            }
             this.f_config.createNewFile();
             final FileWriter fstream = new FileWriter(this.f_config);
             final BufferedWriter out = new BufferedWriter(fstream);
@@ -376,21 +389,21 @@ public class TheEndAgain extends JavaPlugin {
             out.write("pluginVersion: " + this.getDescription().getVersion() + "\n\n");
 
             out.write("#Should we use the [TheEndAgain] prefix in messages ? Yes=true, No=false\n");
-            out.write("useTEAPrefix: true\n\n");
+            out.write("useTEAPrefix: " + this.config.getBoolean("useTEAPrefix", true) + "\n\n");
 
             out.write("#Should we regen the End world at server stop ? Yes=true, No=false\n");
-            out.write("regenOnStop: true\n\n");
+            out.write("regenOnStop: " + this.config.getBoolean("regenOnStop", false) + "\n\n");
 
             out.write("#Should we regen the End world when respawning EnderDragons ? Yes=true, No=false\n");
-            out.write("regenOnRespawn: false\n\n");
+            out.write("regenOnRespawn: " + this.config.getBoolean("regenOnRespawn", false) + "\n\n");
 
             out.write("#What should we do if there are players in the End world on regen ?\n");
             out.write("#	* 0 = All players in the End world get kicked, so they can rejoin directly in the End after restart <= Default Value\n");
             out.write("#	* 1 = All players in the End world get teleported to first world's spawn\n");
-            out.write("actionOnRegen: 0\n\n");
+            out.write("actionOnRegen: " + this.config.getInt("actionOnRegen", 0) + "\n\n");
 
             out.write("#Messages to send when the End regen. Used for broadcast and kick message (actionOnRegen value above)\n");
-            out.write("regenMessage: 'The &cEnd &ais regenerating !'\n\n");
+            out.write("regenMessage: '" + this.config.getString("regenMessage", "The &cEnd &ais regenerating !") + "'\n\n");
 
             out.write("#The end will be regenerated and ED will respawn every X minutes. Here are some examples :\n");
             out.write("#	* 0    = Disabled\n");
@@ -401,39 +414,39 @@ public class TheEndAgain extends JavaPlugin {
             out.write("#	* 480  = 8 hours (3 times per day)\n");
             out.write("#	* 720  = 12 hours (2 times per day)\n");
             out.write("#	* 1440 = 24 hours (1 time per day) <= Default Value\n");
-            out.write("respawnTimer: 1440\n\n");
+            out.write("respawnTimer: " + this.config.getInt("respawnTimer", 0) + "\n\n");
 
-            out.write("#Maximum number of EnderDragon to be respawned in the End world ?\n");
-            out.write("nbMaxEnderDragon: 1\n\n");
+            out.write("#Maximum number of EnderDragon to be respawned in the End world ? Should not be greater than 3 or 4\n");
+            out.write("nbMaxEnderDragon: " + this.config.getInt("nbMaxEnderDragon", 1) + "\n\n");
 
-            out.write("#Minimum number of EnderDragon to be respawned in the End world ?\n");
-            out.write("nbMinEnderDragon: 1\n\n");
+            out.write("#Minimum number of EnderDragon to be respawned in the End world ? Should not be greater than 3 or 4\n");
+            out.write("nbMinEnderDragon: " + this.config.getInt("nbMinEnderDragon", 1) + "\n\n");
 
             out.write("#Use custom XP rewarding system ? Yes=1, No=0\n");
-            out.write("xpRewardingType: 1\n\n");
+            out.write("xpRewardingType: " + this.config.getInt("xpRewardingType", 0) + "\n\n");
 
             out.write("#How many XP points does the ED drop/give ?\n");
-            out.write("xpReward: 20000\n\n");
+            out.write("xpReward: " + this.config.getInt("xpReward", 20000) + "\n\n");
 
             out.write("#Messages to send when the ED respawn. Set to '' for no messages. Seperate different lines with ;\n");
-            out.write("respawnMessages: 'The &cEnderDragon &arespawned !;Will you try to &ckill him &a?'\n\n");
+            out.write("respawnMessages: '" + this.config.getString("respawnMessages", "The &cEnderDragon &arespawned !;Will you try to &ckill him &a?") + "'\n\n");
 
             out.write("#Messages to send when the ED die and players receive exp with custom system.\n");
             out.write("#	Message format : expMessage1 <expQuantity> expMessage2\n");
             out.write("#	Example with 100 as quantity : The EnderDragon died ! You won 100 exp !\n");
-            out.write("expMessage1: 'The &cED &adied !;You won &c'\n");
-            out.write("expMessage2: ' &aexp !'\n\n");
+            out.write("expMessage1: '" + this.config.getString("expMessage1", "The &cED &adied !;You won &c") + "'\n");
+            out.write("expMessage2: '" + this.config.getString("expMessage2", " &aexp !") + "'\n\n");
 
             out.write("#Change the health value of the EnderDragon. Default = 200\n");
-            out.write("enderDragonHealth: 200\n\n");
+            out.write("enderDragonHealth: " + this.config.getInt("enderDragonHealth", 200) + "\n\n");
 
             out.write("#Prevent EnderDragon from creating portals on Death ?\n");
             out.write("#    * 0    = Disabled - portal will spawn normally. Removes any obsidian tower who could block it.\n");
             out.write("#    * 1    = Egg      - portal will be removed but DragonEgg still spawn. Also removes obsi tower.\n");
             out.write("#    * 2    = Enabled  - portal will not spawn. No more cuted obsidian towers. No Egg.\n");
-            out.write("preventPortals: 0\n\n");
+            out.write("preventPortals: " + this.config.getInt("preventPortals", 0) + "\n\n");
             out.close();
-            this.getLogger().info("config.yml generated, please see plugins/TheEndAgain/config.yml !");
+            this.getLogger().info("config.yml " + (update ? "updated" : "generated") + ", please see plugins/TheEndAgain/config.yml !");
         } catch (final Exception ex) {
             ex.printStackTrace();
         }

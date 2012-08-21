@@ -2,25 +2,12 @@
 name: TheEndAgain
 author: Ribesg
 main: com.github.ribesg.tea.TheEndAgain
-version: 0.99f
+version: 0.99g
 description: Respawn the EnderDragon and/or regen the End world
 
 commands:
-    respawnenderdragon:
-        description: Respawn the EnderDragon
+    end:
+        description: General End command
         default: op
-        aliases: [respawnED]
         usage: |
-            /<command>
-    nbenderdragon:
-        description: Know how many ED are alive
-        default: op
-        aliases: [nbED]
-        usage: |
-            /<command>
-    regenend:
-        description: Regen the End World
-        default: op
-        aliases: [regend]
-        usage: |
-            /<command>
+            /<command> help

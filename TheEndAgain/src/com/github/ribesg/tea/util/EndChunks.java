@@ -3,6 +3,7 @@ package com.github.ribesg.tea.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -21,12 +22,12 @@ public class EndChunks {
     }
 
     public void addChunk(final ExtendedChunk chunk) {
-        final String coords = new StringBuffer().append(chunk.getX()).append(';').append(chunk.getZ()).toString();
+        final String coords = new StringBuffer().append(chunk.getX()).append(';').append(chunk.getZ()).append(';').append(chunk.isProtected()).toString();
         this.chunks.put(coords, chunk);
     }
 
     public ExtendedChunk addChunk(final Chunk c) {
-        final String coords = new StringBuffer().append(c.getX()).append(';').append(c.getZ()).toString();
+        final String coords = new StringBuffer().append(c.getX()).append(';').append(c.getZ()).append(';').append("false").toString();
         final ExtendedChunk chunk = new ExtendedChunk(c);
         this.chunks.put(coords, chunk);
         return chunk;
@@ -34,7 +35,12 @@ public class EndChunks {
 
     public ExtendedChunk getChunk(final int x, final int z) {
         final String coords = new StringBuffer().append(x).append(';').append(z).toString();
-        return this.chunks.get(coords);
+        final ExtendedChunk c = this.chunks.get(coords + ";false");
+        if (c == null) {
+            return this.chunks.get(coords + ";true");
+        } else {
+            return c;
+        }
     }
 
     public ExtendedChunk getChunk(final Chunk c) {
@@ -53,6 +59,7 @@ public class EndChunks {
 
     public void save(final File f_endChunks) {
         final List<String> coords = new ArrayList<String>(this.chunks.keySet());
+        Collections.sort(coords);
         final YamlConfiguration endChunks = new YamlConfiguration();
         endChunks.set("chunks", coords);
         try {
@@ -76,7 +83,14 @@ public class EndChunks {
                             final String[] split = coord.split(";");
                             final int x = Integer.parseInt(split[0]);
                             final int z = Integer.parseInt(split[1]);
-                            this.chunks.put(coord, new ExtendedChunk(x, z, this.endWorld.getName()));
+                            final ExtendedChunk c = new ExtendedChunk(x, z, this.endWorld.getName());
+                            if (split.length == 3) {
+                                final boolean isProtected = Boolean.parseBoolean(split[2]);
+                                c.setProtected(isProtected);
+                                this.chunks.put(coord, c);
+                            } else {
+                                this.chunks.put(coord + ";false", c);
+                            }
                         } catch (final Exception e) {
                             e.printStackTrace();
                         }
