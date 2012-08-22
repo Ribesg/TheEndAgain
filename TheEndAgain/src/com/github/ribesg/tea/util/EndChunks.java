@@ -5,51 +5,55 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import com.github.ribesg.tea.TheEndAgain;
+
 
 public class EndChunks {
-    private final HashMap<String, ExtendedChunk> chunks;
-    private final World                          endWorld;
+    private final TheEndAgain                plugin;
+    private final Map<String, ExtendedChunk> chunks;
+    private final Set<World>                 endWorlds;
 
-    public EndChunks(final World endWorld) {
+    public EndChunks(final TheEndAgain plugin, final World endWorld) {
+        this.plugin = plugin;
         this.chunks = new HashMap<String, ExtendedChunk>();
-        this.endWorld = endWorld;
+        this.endWorlds = new HashSet<World>();
+        this.endWorlds.add(endWorld);
     }
 
     public void addChunk(final ExtendedChunk chunk) {
-        final String coords = new StringBuffer().append(chunk.getX()).append(';').append(chunk.getZ()).append(';').append(chunk.isProtected()).toString();
+        final String coords = new StringBuffer().append(chunk.getWorld()).append(';').append(chunk.getX()).append(';').append(chunk.getZ()).toString();
         this.chunks.put(coords, chunk);
     }
 
     public ExtendedChunk addChunk(final Chunk c) {
-        final String coords = new StringBuffer().append(c.getX()).append(';').append(c.getZ()).append(';').append("false").toString();
+        final String coords = new StringBuffer().append(c.getWorld().getName()).append(';').append(c.getX()).append(';').append(c.getZ()).toString();
         final ExtendedChunk chunk = new ExtendedChunk(c);
         this.chunks.put(coords, chunk);
         return chunk;
     }
 
-    public ExtendedChunk getChunk(final int x, final int z) {
-        final String coords = new StringBuffer().append(x).append(';').append(z).toString();
-        final ExtendedChunk c = this.chunks.get(coords + ";false");
-        if (c == null) {
-            return this.chunks.get(coords + ";true");
-        } else {
-            return c;
-        }
+    public ExtendedChunk getChunk(final String worldName, final int x, final int z) {
+        final String coords = new StringBuffer().append(worldName).append(';').append(x).append(';').append(z).toString();
+        final ExtendedChunk c = this.chunks.get(coords);
+        return this.chunks.get(coords);
     }
 
     public ExtendedChunk getChunk(final Chunk c) {
-        return this.getChunk(c.getX(), c.getZ());
+        return this.getChunk(c.getWorld().getName(), c.getX(), c.getZ());
     }
 
-    public void regen() {
+    public void regen(final String worldName) {
         for (final ExtendedChunk c : this.chunks.values()) {
-            c.setToBeRegen(true);
+            c.setToBeRegen(c.getWorld().equals(worldName));
         }
     }
 
@@ -60,6 +64,9 @@ public class EndChunks {
     public void save(final File f_endChunks) {
         final List<String> coords = new ArrayList<String>(this.chunks.keySet());
         Collections.sort(coords);
+        for (String coord : coords) {
+            coord = coord + ';' + this.chunks.get(coord).isProtected();
+        }
         final YamlConfiguration endChunks = new YamlConfiguration();
         endChunks.set("chunks", coords);
         try {
@@ -81,17 +88,15 @@ public class EndChunks {
                     for (final String coord : endChunks.getStringList("chunks")) {
                         try {
                             final String[] split = coord.split(";");
-                            final int x = Integer.parseInt(split[0]);
-                            final int z = Integer.parseInt(split[1]);
-                            final ExtendedChunk c = new ExtendedChunk(x, z, this.endWorld.getName());
-                            if (split.length == 3) {
-                                final boolean isProtected = Boolean.parseBoolean(split[2]);
-                                c.setProtected(isProtected);
-                                this.chunks.put(coord, c);
-                            } else {
-                                this.chunks.put(coord + ";false", c);
-                            }
+                            final String worldName = split[0];
+                            final int x = Integer.parseInt(split[1]);
+                            final int z = Integer.parseInt(split[2]);
+                            final ExtendedChunk c = new ExtendedChunk(x, z, worldName);
+                            final boolean isProtected = Boolean.parseBoolean(split[3]);
+                            c.setProtected(isProtected);
+                            this.chunks.put(worldName + ';' + x + ';' + z, c);
                         } catch (final Exception e) {
+
                             e.printStackTrace();
                         }
                     }

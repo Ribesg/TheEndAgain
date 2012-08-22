@@ -167,7 +167,7 @@ public class TheEndAgain extends JavaPlugin {
             this.getLogger().warning("No End world found ! Nothing will be done.");
             Bukkit.getPluginManager().disablePlugin(this);
         } else {
-            this.endChunks = new EndChunks(this.endWorld);
+            this.endChunks = new EndChunks(this, this.endWorld);
 
             // Creating all thoses objects is a bit long, dn't block the main thread for that.
             Bukkit.getScheduler().scheduleAsyncDelayedTask(this, new Runnable() {
@@ -254,7 +254,7 @@ public class TheEndAgain extends JavaPlugin {
             c.unload();
         }
         this.getLogger().info("Soft Regen - Flag chunks as to-be-regen-on-reload...");
-        this.endChunks.regen();
+        this.endChunks.regen(this.endWorld.getName());
         this.getLogger().info("Soft Regen - Chunks flagged. Waiting...");
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 
