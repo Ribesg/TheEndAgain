@@ -313,7 +313,7 @@ public class TEA_Listener implements Listener {
 
                 @Override
                 public void run() {
-                    TEA_Listener.this.plugin.edHealth.put(ed.getUniqueId(), ed.getHealth());
+                    TEA_Listener.this.plugin.edHealth.put(ed.getUniqueId(), ed.getHealth() + event.getAmount());
                 }
             });
         }
