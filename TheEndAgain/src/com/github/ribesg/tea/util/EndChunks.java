@@ -43,7 +43,6 @@ public class EndChunks {
 
     public ExtendedChunk getChunk(final String worldName, final int x, final int z) {
         final String coords = new StringBuffer().append(worldName).append(';').append(x).append(';').append(z).toString();
-        final ExtendedChunk c = this.chunks.get(coords);
         return this.chunks.get(coords);
     }
 
@@ -96,7 +95,7 @@ public class EndChunks {
                             c.setProtected(isProtected);
                             this.chunks.put(worldName + ';' + x + ';' + z, c);
                         } catch (final Exception e) {
-
+                            this.plugin.getLogger().severe("ERROR loading endChunks.yml, invalid chunk description found : " + coord);
                             e.printStackTrace();
                         }
                     }

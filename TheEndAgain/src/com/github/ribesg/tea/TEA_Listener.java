@@ -27,6 +27,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.util.Vector;
 
+import com.github.ribesg.tea.util.EndWorldConfig;
 import com.github.ribesg.tea.util.ExtendedChunk;
 
 
@@ -119,13 +120,14 @@ public class TEA_Listener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void rewardOnEDDeath(final EntityDeathEvent event) {
+        final EndWorldConfig config = this.plugin.mainEndConfig;
         if (!(event.getEntity() instanceof EnderDragon)) {
             return;
         }
         final EnderDragon ed = (EnderDragon) event.getEntity();
-        if (this.plugin.xpRewardingType == 0) {
-            event.setDroppedExp(this.plugin.xpReward);
-        } else if (this.plugin.xpRewardingType == 1) {
+        if (config.getXpRewardingType() == 0) {
+            event.setDroppedExp(config.getXpReward());
+        } else if (config.getXpRewardingType() == 1) {
             event.setDroppedExp(0);
             final HashMap<String, Double> edData = this.plugin.data.get(ed.getUniqueId());
             if (edData != null) {
@@ -147,26 +149,27 @@ public class TEA_Listener implements Listener {
                 for (final String s : edData.keySet()) {
                     final Player p = this.plugin.getServer().getPlayerExact(s);
                     if (p != null) {
-                        final double expToGive = this.plugin.xpReward * (edData.get(s) / totalDmg);
+                        final double expToGive = config.getXpReward() * (edData.get(s) / totalDmg);
                         p.giveExp((int) expToGive);
-                        for (int i = 0; i < this.plugin.expMessage1.length - 1; i++) {
-                            p.sendMessage(this.plugin.header + ChatColor.GREEN + this.plugin.toColor(this.plugin.expMessage1[i]));
+                        for (int i = 0; i < config.getExpMessage1().length - 1; i++) {
+                            p.sendMessage(this.plugin.header + ChatColor.GREEN + this.plugin.toColor(config.getExpMessage1()[i]));
                         }
-                        p.sendMessage(this.plugin.header + ChatColor.GREEN + this.plugin.toColor(this.plugin.expMessage1[this.plugin.expMessage1.length - 1]) + (int) expToGive
-                                + this.plugin.toColor(this.plugin.expMessage2[0]));
-                        for (int i = 1; i < this.plugin.expMessage2.length; i++) {
-                            p.sendMessage(this.plugin.header + ChatColor.GREEN + this.plugin.toColor(this.plugin.expMessage2[i]));
+                        p.sendMessage(this.plugin.header + ChatColor.GREEN + this.plugin.toColor(config.getExpMessage1()[config.getExpMessage1().length - 1]) + (int) expToGive
+                                + this.plugin.toColor(config.getExpMessage2()[0]));
+                        for (int i = 1; i < config.getExpMessage2().length; i++) {
+                            p.sendMessage(this.plugin.header + ChatColor.GREEN + this.plugin.toColor(config.getExpMessage2()[i]));
                         }
                     }
                 }
             }
         }
-        this.plugin.nbED--;
+        config.setNbEd(config.getNbEd() - 1);
         this.plugin.data.remove(ed.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerHitED(final EntityDamageEvent event) {
+        final EndWorldConfig config = this.plugin.mainEndConfig;
         if (!(event.getEntity() instanceof EnderDragon)) {
             return;
         }
@@ -181,7 +184,7 @@ public class TEA_Listener implements Listener {
 
         // Handle custom ED health
         if (!this.plugin.edHealth.containsKey(edId)) {
-            this.plugin.edHealth.put(edId, ed.getHealth() >= 200 ? this.plugin.enderDragonHealth : ed.getHealth());
+            this.plugin.edHealth.put(edId, ed.getHealth() >= 200 ? config.getEnderDragonHealth() : ed.getHealth());
         }
         final int oldHealth = this.plugin.edHealth.get(edId);
         final int newHealth = oldHealth - eventByEntity.getDamage();
@@ -225,8 +228,9 @@ public class TEA_Listener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onEDCreatePortal(final EntityCreatePortalEvent event) {
+        final EndWorldConfig config = this.plugin.mainEndConfig;
         if (event.getEntityType().equals(EntityType.ENDER_DRAGON)) {
-            if (this.plugin.preventPortals == 1) {
+            if (config.getPreventPortals() == 1) {
                 Block egg = null;
                 for (final BlockState b : event.getBlocks()) {
                     if (!b.getType().equals(Material.DRAGON_EGG)) {
@@ -240,11 +244,11 @@ public class TEA_Listener implements Listener {
                     final int chunkZ = egg.getChunk().getZ();
                     for (int x = chunkX - 2; x <= chunkX + 2; x++) {
                         for (int z = chunkZ - 2; z <= chunkZ + 2; z++) {
-                            this.plugin.endWorld.refreshChunk(x, z);
+                            this.plugin.mainEndWorld.refreshChunk(x, z);
                         }
                     }
                 }
-            } else if (this.plugin.preventPortals == 2) {
+            } else if (config.getPreventPortals() == 2) {
                 event.setCancelled(true);
             }
         }
@@ -253,7 +257,7 @@ public class TEA_Listener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onEndChunkLoad(final ChunkLoadEvent event) {
         final Chunk c = event.getChunk();
-        if (c.getWorld().equals(this.plugin.endWorld)) {
+        if (c.getWorld().equals(this.plugin.mainEndWorld)) {
             ExtendedChunk chunk = this.plugin.endChunks.getChunk(c);
             if (chunk == null) {
                 chunk = this.plugin.endChunks.addChunk(c);
@@ -265,7 +269,7 @@ public class TEA_Listener implements Listener {
                     teleportDestX = 20;
                     teleportDestZ = 20;
                 }
-                final Location teleportDest = new Location(this.plugin.endWorld, teleportDestX, 90, teleportDestZ);
+                final Location teleportDest = new Location(this.plugin.mainEndWorld, teleportDestX, 90, teleportDestZ);
                 for (final Entity e : c.getEntities()) {
                     if (e.getType() == EntityType.ENDER_DRAGON && ((EnderDragon) e).getHealth() > 0) {
                         e.teleport(teleportDest);
@@ -274,8 +278,8 @@ public class TEA_Listener implements Listener {
                     }
                 }
                 // Now regen
-                this.plugin.endWorld.regenerateChunk(c.getX(), c.getZ());
-                this.plugin.endWorld.refreshChunk(c.getX(), c.getZ());
+                this.plugin.mainEndWorld.regenerateChunk(c.getX(), c.getZ());
+                this.plugin.mainEndWorld.refreshChunk(c.getX(), c.getZ());
                 chunk.setToBeRegen(false);
             }
         }
@@ -283,13 +287,14 @@ public class TEA_Listener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEnderDragonSpawn(final CreatureSpawnEvent event) {
+        final EndWorldConfig config = this.plugin.mainEndConfig;
         if (event.getEntityType() == EntityType.ENDER_DRAGON) {
-            if (this.plugin.nbED >= this.plugin.actualNbEnderDragon) {
+            if (config.getNbEd() >= config.getActualNbMaxEnderDragon()) {
                 event.setCancelled(true);
             } else {
                 final EnderDragon ed = (EnderDragon) event.getEntity();
-                this.plugin.edHealth.put(ed.getUniqueId(), this.plugin.enderDragonHealth);
-                this.plugin.nbED++;
+                this.plugin.edHealth.put(ed.getUniqueId(), config.getEnderDragonHealth());
+                config.setNbEd(config.getNbEd() + 1);
             }
         }
     }

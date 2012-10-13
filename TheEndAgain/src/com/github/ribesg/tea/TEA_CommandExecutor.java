@@ -132,8 +132,9 @@ public class TEA_CommandExecutor implements CommandExecutor {
     }
 
     private boolean cmdRegen(final CommandSender sender) {
-        if (this.plugin.endWorld != null) {
-            this.plugin.softRegen();
+        // TODO Ability to choose which endWorld
+        if (this.plugin.mainEndWorld != null) {
+            this.plugin.softRegen(this.plugin.mainEndWorld);
             return true;
         } else {
             sender.sendMessage(this.plugin.header + ChatColor.RED + "There is no End world !");
@@ -142,9 +143,10 @@ public class TEA_CommandExecutor implements CommandExecutor {
     }
 
     private boolean cmdRespawn(final CommandSender sender) {
+        // TODO Ability to choose which endWorld
         // The command is like /respawnenderdragon or /respawnED
-        if (this.plugin.endWorld != null) {
-            final int nb = this.plugin.spawnEnderDragonsToActualNumber();
+        if (this.plugin.mainEndWorld != null) {
+            final int nb = this.plugin.spawnEnderDragonsToActualNumber(this.plugin.mainEndWorld);
             if (nb == 0) {
                 sender.sendMessage(this.plugin.header + ChatColor.RED + "Reached the actual maximum number of EnderDragons !");
                 return true;
@@ -162,16 +164,17 @@ public class TEA_CommandExecutor implements CommandExecutor {
     }
 
     private boolean cmdNb(final CommandSender sender) {
-        if (this.plugin.endWorld != null) {
-            final int nb = this.plugin.nbED;
+        // TODO Ability to choose which endWorld
+        if (this.plugin.mainEndWorld != null) {
+            final int nb = this.plugin.mainEndConfig.getNbEd();
             if (nb == 0) {
-                sender.sendMessage(this.plugin.header + ChatColor.GREEN + "There is no ED alive. Actual max number is " + this.plugin.actualNbEnderDragon);
+                sender.sendMessage(this.plugin.header + ChatColor.GREEN + "There is no ED alive. Actual max number is " + this.plugin.mainEndConfig.getActualNbMaxEnderDragon());
                 return true;
             } else if (nb == 1) {
-                sender.sendMessage(this.plugin.header + ChatColor.GREEN + "There is 1 ED alive. Actual max number is " + this.plugin.actualNbEnderDragon);
+                sender.sendMessage(this.plugin.header + ChatColor.GREEN + "There is 1 ED alive. Actual max number is " + this.plugin.mainEndConfig.getActualNbMaxEnderDragon());
                 return true;
             } else {
-                sender.sendMessage(this.plugin.header + ChatColor.GREEN + "There are " + nb + " EDs alive. Actual max number is " + this.plugin.actualNbEnderDragon);
+                sender.sendMessage(this.plugin.header + ChatColor.GREEN + "There are " + nb + " EDs alive. Actual max number is " + this.plugin.mainEndConfig.getActualNbMaxEnderDragon());
                 return true;
             }
         } else {
@@ -192,7 +195,7 @@ public class TEA_CommandExecutor implements CommandExecutor {
             sender.sendMessage(this.plugin.header + "Chunk coords : " + chunk.getX() + "," + chunk.getZ());
             sender.sendMessage(this.plugin.header + "Min/max locations : " + 16 * chunk.getX() + "," + 16 * chunk.getZ() + " / " + (16 * chunk.getX() + (chunk.getX() >= 0 ? 15 : -15)) + ","
                     + (16 * chunk.getZ() + (chunk.getZ() >= 0 ? 15 : -15)));
-            if (this.plugin.endWorld == world) {
+            if (this.plugin.mainEndWorld == world) {
                 final ExtendedChunk c = this.plugin.endChunks.getChunk(chunk);
                 if (c == null) {
                     sender.sendMessage(this.plugin.header + ChatColor.GOLD + "Unknown state End World chunk");
@@ -216,7 +219,7 @@ public class TEA_CommandExecutor implements CommandExecutor {
             final Location loc = ((Player) sender).getLocation();
             final World world = loc.getWorld();
             final Chunk chunk = loc.getChunk();
-            if (this.plugin.endWorld == world) {
+            if (this.plugin.mainEndWorld == world) {
                 final ExtendedChunk c = this.plugin.endChunks.getChunk(chunk);
                 if (c == null) {
                     sender.sendMessage(this.plugin.header + ChatColor.GOLD + "Unknown state End World chunk, please try again after server reboot");
@@ -241,7 +244,7 @@ public class TEA_CommandExecutor implements CommandExecutor {
             final Location loc = ((Player) sender).getLocation();
             final World world = loc.getWorld();
             final Chunk chunk = loc.getChunk();
-            if (this.plugin.endWorld == world) {
+            if (this.plugin.mainEndWorld == world) {
                 final ExtendedChunk c = this.plugin.endChunks.getChunk(chunk);
                 if (c == null) {
                     sender.sendMessage(this.plugin.header + ChatColor.GOLD + "Unknown state End World chunk, please try again after server reboot");
