@@ -175,12 +175,7 @@ public class TEA_Listener implements Listener {
             }
         }
         final int oldHealth = this.plugin.edHealth.get(edId);
-        int newHealth = oldHealth - event.getDamage();
-        if (newHealth < 0) {
-            // Consider only real damages
-            event.setDamage(oldHealth);
-            newHealth = 0;
-        }
+        final int newHealth = oldHealth - event.getDamage();
         this.plugin.edHealth.put(edId, newHealth);
         if (oldHealth > 200 + event.getDamage()) {
             event.setDamage(0);
