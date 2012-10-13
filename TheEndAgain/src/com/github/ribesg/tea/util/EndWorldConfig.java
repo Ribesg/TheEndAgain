@@ -28,8 +28,10 @@ public class EndWorldConfig {
     private String[]          respawnMessages;
     private String[]          expMessage1;
     private String[]          expMessage2;
+    private int               customEggHandling;
+    private String eggMessage;
 
-    private int nbEd;
+    private int               nbEd;
 
     public EndWorldConfig(final TheEndAgain plugin) {
         this.plugin = plugin;
@@ -190,5 +192,21 @@ public class EndWorldConfig {
 
     public void setNbEd(final int nbEd) {
         this.nbEd = nbEd;
+    }
+
+    public int getCustomEggHandling() {
+        return this.customEggHandling;
+    }
+
+    public void setCustomEggHandling(final int customEggHandling) {
+        this.customEggHandling = customEggHandling;
+    }
+
+    public String getEggMessage() {
+        return this.eggMessage;
+    }
+
+    public void setEggMessage(final String eggMessage) {
+        this.eggMessage = eggMessage;
     }
 }

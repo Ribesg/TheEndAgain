@@ -191,10 +191,15 @@ public class TEA_CommandExecutor implements CommandExecutor {
             final Location loc = ((Player) sender).getLocation();
             final World world = loc.getWorld();
             final Chunk chunk = loc.getChunk();
+
+            sender.sendMessage(ChatColor.BLACK + "-----------------------------------------------------");
             sender.sendMessage(this.plugin.header + ChatColor.GREEN + "Informations about the chunk you are in : ");
             sender.sendMessage(this.plugin.header + "Chunk coords : " + chunk.getX() + "," + chunk.getZ());
-            sender.sendMessage(this.plugin.header + "Min/max locations : " + 16 * chunk.getX() + "," + 16 * chunk.getZ() + " / " + (16 * chunk.getX() + (chunk.getX() >= 0 ? 15 : -15)) + ","
-                    + (16 * chunk.getZ() + (chunk.getZ() >= 0 ? 15 : -15)));
+            final int minLocX = chunk.getX() < 0 ? (chunk.getX() + 1) * 16 : chunk.getX() * 16;
+            final int maxLocX = chunk.getX() < 0 ? chunk.getX() * 16 + 1 : chunk.getX() * 16 + 15;
+            final int minLocZ = chunk.getZ() < 0 ? (chunk.getZ() + 1) * 16 : chunk.getZ() * 16;
+            final int maxLocZ = chunk.getZ() < 0 ? chunk.getZ() * 16 + 1 : chunk.getZ() * 16 + 15;
+            sender.sendMessage(this.plugin.header + "Min/max locations : " + minLocX + "," + minLocZ + " / " + maxLocX + "," + maxLocZ);
             if (this.plugin.mainEndWorld == world) {
                 final ExtendedChunk c = this.plugin.endChunks.getChunk(chunk);
                 if (c == null) {
@@ -207,6 +212,7 @@ public class TEA_CommandExecutor implements CommandExecutor {
             } else {
                 sender.sendMessage(this.plugin.header + ChatColor.RED + "Not an End World chunk !");
             }
+            sender.sendMessage(ChatColor.BLACK + "-----------------------------------------------------");
             return true;
         }
     }

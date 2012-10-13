@@ -61,11 +61,11 @@ public class EndChunks {
     }
 
     public void save(final File f_endChunks) {
-        final List<String> coords = new ArrayList<String>(this.chunks.keySet());
-        Collections.sort(coords);
-        for (String coord : coords) {
-            coord = coord + ';' + this.chunks.get(coord).isProtected();
+        final List<String> coords = new ArrayList<String>();
+        for (final String coord : this.chunks.keySet()) {
+            coords.add(coord + ';' + this.chunks.get(coord).isProtected());
         }
+        Collections.sort(coords);
         final YamlConfiguration endChunks = new YamlConfiguration();
         endChunks.set("chunks", coords);
         try {

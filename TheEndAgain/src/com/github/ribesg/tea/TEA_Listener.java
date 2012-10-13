@@ -1,9 +1,14 @@
 package com.github.ribesg.tea;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -24,8 +29,10 @@ import org.bukkit.event.entity.EntityCreatePortalEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.util.Vector;
+import org.bukkit.inventory.ItemStack;
 
 import com.github.ribesg.tea.util.EndWorldConfig;
 import com.github.ribesg.tea.util.ExtendedChunk;
@@ -33,89 +40,13 @@ import com.github.ribesg.tea.util.ExtendedChunk;
 
 public class TEA_Listener implements Listener {
 
-    private final TheEndAgain       plugin;
-    private final ArrayList<Vector> portalBlocks;
+    // Player with less than that damages done to dead ED can't receive the DragonEgg
+    private final static float threshold = 0.15f;
+
+    private final TheEndAgain  plugin;
 
     public TEA_Listener(final TheEndAgain instance) {
         this.plugin = instance;
-        this.portalBlocks = new ArrayList<Vector>();
-        this.portalBlocks.add(new Vector(0, -1, 0));
-        this.portalBlocks.add(new Vector(0, -2, 0));
-        this.portalBlocks.add(new Vector(+1, -2, 0));
-        this.portalBlocks.add(new Vector(-1, -2, 0));
-        this.portalBlocks.add(new Vector(0, -2, +1));
-        this.portalBlocks.add(new Vector(0, -2, -1));
-        this.portalBlocks.add(new Vector(0, -3, 0));
-
-        this.portalBlocks.add(new Vector(+3, -4, -1));
-        this.portalBlocks.add(new Vector(+3, -4, 0));
-        this.portalBlocks.add(new Vector(+3, -4, +1));
-
-        this.portalBlocks.add(new Vector(+2, -4, -2));
-        this.portalBlocks.add(new Vector(+2, -4, -1));
-        this.portalBlocks.add(new Vector(+2, -4, 0));
-        this.portalBlocks.add(new Vector(+2, -4, +1));
-        this.portalBlocks.add(new Vector(+2, -4, +2));
-
-        this.portalBlocks.add(new Vector(+1, -4, -3));
-        this.portalBlocks.add(new Vector(+1, -4, -2));
-        this.portalBlocks.add(new Vector(+1, -4, -1));
-        this.portalBlocks.add(new Vector(+1, -4, 0));
-        this.portalBlocks.add(new Vector(+1, -4, +1));
-        this.portalBlocks.add(new Vector(+1, -4, +2));
-        this.portalBlocks.add(new Vector(+1, -4, +3));
-
-        this.portalBlocks.add(new Vector(0, -4, -3));
-        this.portalBlocks.add(new Vector(0, -4, -2));
-        this.portalBlocks.add(new Vector(0, -4, -1));
-        this.portalBlocks.add(new Vector(0, -4, 0));
-        this.portalBlocks.add(new Vector(0, -4, +1));
-        this.portalBlocks.add(new Vector(0, -4, +2));
-        this.portalBlocks.add(new Vector(0, -4, +3));
-
-        this.portalBlocks.add(new Vector(-1, -4, -3));
-        this.portalBlocks.add(new Vector(-1, -4, -2));
-        this.portalBlocks.add(new Vector(-1, -4, -1));
-        this.portalBlocks.add(new Vector(-1, -4, 0));
-        this.portalBlocks.add(new Vector(-1, -4, +1));
-        this.portalBlocks.add(new Vector(-1, -4, +2));
-        this.portalBlocks.add(new Vector(-1, -4, +3));
-
-        this.portalBlocks.add(new Vector(-2, -4, -2));
-        this.portalBlocks.add(new Vector(-2, -4, -1));
-        this.portalBlocks.add(new Vector(-2, -4, 0));
-        this.portalBlocks.add(new Vector(-2, -4, +1));
-        this.portalBlocks.add(new Vector(-2, -4, +2));
-
-        this.portalBlocks.add(new Vector(-3, -4, -1));
-        this.portalBlocks.add(new Vector(-3, -4, 0));
-        this.portalBlocks.add(new Vector(-3, -4, +1));
-
-        this.portalBlocks.add(new Vector(+2, -5, -1));
-        this.portalBlocks.add(new Vector(+2, -5, 0));
-        this.portalBlocks.add(new Vector(+2, -5, +1));
-
-        this.portalBlocks.add(new Vector(+1, -5, -2));
-        this.portalBlocks.add(new Vector(+1, -5, -1));
-        this.portalBlocks.add(new Vector(+1, -5, 0));
-        this.portalBlocks.add(new Vector(+1, -5, +1));
-        this.portalBlocks.add(new Vector(+1, -5, +2));
-
-        this.portalBlocks.add(new Vector(0, -5, -2));
-        this.portalBlocks.add(new Vector(0, -5, -1));
-        this.portalBlocks.add(new Vector(0, -5, 0));
-        this.portalBlocks.add(new Vector(0, -5, +1));
-        this.portalBlocks.add(new Vector(0, -5, +2));
-
-        this.portalBlocks.add(new Vector(-1, -5, -2));
-        this.portalBlocks.add(new Vector(-1, -5, -1));
-        this.portalBlocks.add(new Vector(-1, -5, 0));
-        this.portalBlocks.add(new Vector(-1, -5, +1));
-        this.portalBlocks.add(new Vector(-1, -5, +2));
-
-        this.portalBlocks.add(new Vector(-2, -5, -1));
-        this.portalBlocks.add(new Vector(-2, -5, 0));
-        this.portalBlocks.add(new Vector(-2, -5, +1));
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -125,30 +56,31 @@ public class TEA_Listener implements Listener {
             return;
         }
         final EnderDragon ed = (EnderDragon) event.getEntity();
-        if (config.getXpRewardingType() == 0) {
-            event.setDroppedExp(config.getXpReward());
-        } else if (config.getXpRewardingType() == 1) {
-            event.setDroppedExp(0);
-            final HashMap<String, Double> edData = this.plugin.data.get(ed.getUniqueId());
-            if (edData != null) {
-                // Compute total damages done to ED
-                double totalDmg = 0;
-                for (final String s : edData.keySet()) {
-                    totalDmg += edData.get(s);
-                }
+        final HashMap<String, Double> edData = this.plugin.data.get(ed.getUniqueId());
+        if (edData != null) {
+            // Compute total damages done to ED
+            double totalDmg = 0.0;
+            for (final String s : edData.keySet()) {
+                totalDmg += edData.get(s);
+            }
 
-                // Substracte damages from offline players
-                for (final String s : edData.keySet()) {
-                    final Player p = this.plugin.getServer().getPlayerExact(s);
-                    if (p == null) {
-                        totalDmg -= edData.get(s);
-                    }
+            // Substracte damages from offline players & remove them from the list
+            final Iterator<Entry<String, Double>> it = edData.entrySet().iterator();
+            while (it.hasNext()) {
+                final Entry<String, Double> e = it.next();
+                final Player p = this.plugin.getServer().getPlayerExact(e.getKey());
+                if (p == null) {
+                    totalDmg -= e.getValue();
+                    it.remove();
                 }
+            }
 
+            if (config.getXpRewardingType() == 1) {
+                event.setDroppedExp(0);
                 // Now we can compute our percentages and give the exp to players
                 for (final String s : edData.keySet()) {
                     final Player p = this.plugin.getServer().getPlayerExact(s);
-                    if (p != null) {
+                    if (p != null) { // Just to be sure (Should always be true at this point)
                         final double expToGive = config.getXpReward() * (edData.get(s) / totalDmg);
                         p.giveExp((int) expToGive);
                         for (int i = 0; i < config.getExpMessage1().length - 1; i++) {
@@ -159,6 +91,59 @@ public class TEA_Listener implements Listener {
                         for (int i = 1; i < config.getExpMessage2().length; i++) {
                             p.sendMessage(this.plugin.header + ChatColor.GREEN + this.plugin.toColor(config.getExpMessage2()[i]));
                         }
+                    }
+                }
+            } else {
+                event.setDroppedExp(config.getXpReward());
+            }
+            if (config.getCustomEggHandling() == 1 && config.getPreventPortals() != 2) {
+                final SortedMap<String, Float> ratioMap = new TreeMap<String, Float>();
+                for (final String s : edData.keySet()) {
+                    ratioMap.put(s, (float) (edData.get(s) / totalDmg));
+                }
+                final Iterator<Entry<String, Float>> it2 = ratioMap.entrySet().iterator();
+                while (it2.hasNext()) {
+                    if (it2.next().getValue() < TEA_Listener.threshold) {
+                        // Remove players who did little damages
+                        it2.remove();
+                    }
+                }
+
+                // Update ratio according to removed parts of total
+                float remainingRatioTotal = 0f;
+                for (final float f : ratioMap.values()) {
+                    // Computing new total (should be <=1)
+                    remainingRatioTotal += f;
+                }
+                if (remainingRatioTotal != 1) {
+                    // Updating values
+                    for (final String s : ratioMap.keySet()) {
+                        ratioMap.put(s, ratioMap.get(s) * (1 / remainingRatioTotal));
+                    }
+                }
+
+                // Now we will take a random player, the best fighter has the best chance to be choosen
+                float rand = new Random().nextFloat();
+                String playerName = null;
+                for (final Entry<String, Float> e : ratioMap.entrySet()) {
+                    if (rand < e.getValue()) {
+                        playerName = e.getKey();
+                        break;
+                    }
+                    rand -= e.getValue();
+                }
+                if (playerName == null) { // Wtf ?
+                    ed.getWorld().dropItem(ed.getLocation(), new ItemStack(Material.DRAGON_EGG));
+                } else {
+                    final Player p = Bukkit.getServer().getPlayerExact(playerName);
+                    if (p == null) {
+                        ed.getWorld().dropItem(ed.getLocation(), new ItemStack(Material.DRAGON_EGG));
+                    } else {
+                        final HashMap<Integer, ItemStack> given = p.getInventory().addItem(new ItemStack(Material.DRAGON_EGG));
+                        if (given.size() > 0) {
+                            p.getWorld().dropItem(p.getLocation(), new ItemStack(Material.DRAGON_EGG));
+                        }
+                        p.sendMessage(this.plugin.header + ChatColor.GREEN + this.plugin.toColor(config.getEggMessage()));
                     }
                 }
             }
@@ -184,17 +169,23 @@ public class TEA_Listener implements Listener {
 
         // Handle custom ED health
         if (!this.plugin.edHealth.containsKey(edId)) {
-            this.plugin.edHealth.put(edId, ed.getHealth() >= 200 ? config.getEnderDragonHealth() : ed.getHealth());
+            this.plugin.edHealth.put(edId, config.getEnderDragonHealth());
+            if (config.getEnderDragonHealth() < 200) {
+                ed.setHealth(config.getEnderDragonHealth());
+            }
         }
         final int oldHealth = this.plugin.edHealth.get(edId);
-        final int newHealth = oldHealth - eventByEntity.getDamage();
+        int newHealth = oldHealth - event.getDamage();
+        if (newHealth < 0) {
+            // Consider only real damages
+            event.setDamage(oldHealth);
+            newHealth = 0;
+        }
         this.plugin.edHealth.put(edId, newHealth);
-        if (oldHealth > 200 + eventByEntity.getDamage()) {
+        if (oldHealth > 200 + event.getDamage()) {
             event.setDamage(0);
         } else if (oldHealth > 200) {
             event.setDamage(200 - newHealth);
-        } else {
-            event.setDamage(eventByEntity.getDamage());
         }
 
         Player p;
@@ -210,7 +201,7 @@ public class TEA_Listener implements Listener {
         } else {
             return;
         }
-        final String playerName = p.getName().toLowerCase();
+        final String playerName = p.getName();
 
         if (this.plugin.data.containsKey(edId)) {
             edData = this.plugin.data.get(edId);
@@ -224,13 +215,14 @@ public class TEA_Listener implements Listener {
 
         edData.put(playerName, totalDmg);
         this.plugin.data.put(edId, edData);
+        System.out.println(event.getDamage());
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onEDCreatePortal(final EntityCreatePortalEvent event) {
         final EndWorldConfig config = this.plugin.mainEndConfig;
         if (event.getEntityType().equals(EntityType.ENDER_DRAGON)) {
-            if (config.getPreventPortals() == 1) {
+            if (config.getPreventPortals() == 1 && config.getCustomEggHandling() == 0) {
                 Block egg = null;
                 for (final BlockState b : event.getBlocks()) {
                     if (!b.getType().equals(Material.DRAGON_EGG)) {
@@ -250,6 +242,13 @@ public class TEA_Listener implements Listener {
                 }
             } else if (config.getPreventPortals() == 2) {
                 event.setCancelled(true);
+            } else if (config.getCustomEggHandling() == 1) {
+                for (final BlockState b : event.getBlocks()) {
+                    if (b.getType().equals(Material.DRAGON_EGG)) {
+                        b.setType(Material.AIR);
+                        break;
+                    }
+                }
             }
         }
     }
@@ -294,8 +293,34 @@ public class TEA_Listener implements Listener {
             } else {
                 final EnderDragon ed = (EnderDragon) event.getEntity();
                 this.plugin.edHealth.put(ed.getUniqueId(), config.getEnderDragonHealth());
+                if (config.getEnderDragonHealth() < 200) {
+                    ed.setHealth(config.getEnderDragonHealth());
+                }
                 config.setNbEd(config.getNbEd() + 1);
             }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    public void onEnderDragonRegainHealth(final EntityRegainHealthEvent event) {
+        final EndWorldConfig config = this.plugin.mainEndConfig;
+        if (event.getEntityType() == EntityType.ENDER_DRAGON && event.getRegainReason() == RegainReason.ENDER_CRYSTAL) {
+            final EnderDragon ed = (EnderDragon) event.getEntity();
+            if (ed.getHealth() > config.getEnderDragonHealth()) {
+                event.setCancelled(true);
+                ed.setHealth(config.getEnderDragonHealth());
+            } else if (ed.getHealth() == config.getEnderDragonHealth()) {
+                event.setCancelled(true);
+            } else if (ed.getHealth() + event.getAmount() > config.getEnderDragonHealth()) {
+                event.setAmount(config.getEnderDragonHealth() - ed.getHealth());
+            }
+            Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, new Runnable() {
+
+                @Override
+                public void run() {
+                    TEA_Listener.this.plugin.edHealth.put(ed.getUniqueId(), ed.getHealth());
+                }
+            });
         }
     }
 }

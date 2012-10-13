@@ -2,7 +2,7 @@
 name: TheEndAgain
 author: Ribesg
 main: com.github.ribesg.tea.TheEndAgain
-version: 0.99i
+version: 1.00beta
 description: Respawn the EnderDragon and/or regen the End world
 load: POSTWORLD
 

@@ -45,7 +45,7 @@ public class TheEndAgain extends JavaPlugin {
     public EndChunks                              endChunks;
 
     // To store who hit which ED
-    public HashMap<UUID, HashMap<String, Double>> data;
+    public HashMap<UUID, HashMap<String, Double>> data;                                                                                                    // DragonId, <PlayerName, TotalDamage>
 
     // To store custom ED health
     public HashMap<UUID, Integer>                 edHealth;
@@ -68,6 +68,7 @@ public class TheEndAgain extends JavaPlugin {
             this.endChunks.save(this.f_endChunks);
         }
 
+        Bukkit.getScheduler().cancelTasks(this);
         this.getLogger().info("TheEndAgain successfully disabled.");
     }
 
@@ -216,7 +217,7 @@ public class TheEndAgain extends JavaPlugin {
             dragonNumber = config.getNbEd();
             final Random rand = new Random();
             while (dragonNumber < config.getActualNbMaxEnderDragon()) {
-                final Location loc = new Location(this.mainEndWorld, rand.nextInt(20) - 10, rand.nextInt(20) + 90, rand.nextInt(20) - 10);
+                final Location loc = new Location(this.mainEndWorld, rand.nextInt(20) - 10, rand.nextInt(20) + 70, rand.nextInt(20) - 10);
                 loc.getChunk().load();
                 if (this.mainEndWorld.spawnEntity(loc, EntityType.ENDER_DRAGON) == null) {
                     Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
@@ -225,7 +226,7 @@ public class TheEndAgain extends JavaPlugin {
                         public void run() {
                             TheEndAgain.this.mainEndWorld.spawnEntity(loc, EntityType.ENDER_DRAGON);
                         }
-                    }, 20 * 5);
+                    });
                 }
                 dragonNumber++;
                 spawned++;
@@ -366,6 +367,12 @@ public class TheEndAgain extends JavaPlugin {
             config.setEnderDragonHealth(200);
             this.getLogger().warning("enderDragonHealth should greater than 1. Check config. Value set to 200 !");
         }
+        config.setCustomEggHandling(yamlConfig.getInt("customEggHandling", 0));
+        if (config.getCustomEggHandling() != 1 && config.getCustomEggHandling() != 0) {
+            this.getLogger().severe("customEggHandling should be 0 or 1. Check config. Value set to 0 !");
+            config.setCustomEggHandling(0);
+        }
+        config.setEggMessage(yamlConfig.getString("eggMessage", "You earn the &cDragon Egg &a!"));
     }
 
     public void newConfig(final World w) {
@@ -450,6 +457,15 @@ public class TheEndAgain extends JavaPlugin {
             out.write("#    * 1    = Egg      - portal will be removed but DragonEgg still spawn. Also removes obsi tower.\n");
             out.write("#    * 2    = Enabled  - portal will not spawn. No more cuted obsidian towers. No Egg.\n");
             out.write("preventPortals: " + yamlConfig.getInt("preventPortals", 0) + "\n\n");
+
+            out.write("#Directly give the egg to one of the principal killer of the EnderDragon ?\n");
+            out.write("# WARNING - If preventPortals has a value of 2, this does nothing !\n");
+            out.write("#    * 0    = Disabled - The egg will spawn normally\n");
+            out.write("#    * 1    = Enabled  - The egg will be semi-randomly given to one of the best fighter against this EnderDragon\n");
+            out.write("customEggHandling: " + yamlConfig.getInt("customEggHandling", 0) + "\n\n");
+
+            out.write("#Messages to send when the the player obtains an Egg\n");
+            out.write("eggMessage: '" + yamlConfig.getString("eggMessage", "You earn the &cDragon Egg &a!") + "'\n\n");
             out.close();
             this.getLogger().info("config.yml " + (update ? "updated" : "generated") + ", please see plugins/TheEndAgain/config.yml !");
         } catch (final Exception ex) {
