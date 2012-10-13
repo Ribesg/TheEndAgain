@@ -241,7 +241,8 @@ public class TEA_Listener implements Listener {
                 for (final BlockState b : event.getBlocks()) {
                     if (b.getType().equals(Material.DRAGON_EGG)) {
                         b.setType(Material.AIR);
-                        break;
+                    } else if (config.getPreventPortals() == 1) {
+                        b.setType(Material.AIR);
                     }
                 }
             }
