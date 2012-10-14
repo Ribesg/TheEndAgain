@@ -27,7 +27,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityCreatePortalEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
@@ -153,7 +152,7 @@ public class TEA_Listener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-    public void onPlayerHitED(final EntityDamageEvent event) {
+    public void onPlayerHitED(final EntityDamageByEntityEvent event) {
         final EndWorldConfig config = this.plugin.mainEndConfig;
         if (!(event.getEntity() instanceof EnderDragon)) {
             return;
@@ -161,11 +160,6 @@ public class TEA_Listener implements Listener {
         final EnderDragon ed = (EnderDragon) event.getEntity();
         final UUID edId = ed.getUniqueId();
         HashMap<String, Double> edData;
-
-        if (!(event instanceof EntityDamageByEntityEvent)) {
-            return;
-        }
-        final EntityDamageByEntityEvent eventByEntity = (EntityDamageByEntityEvent) event;
 
         // Handle custom ED health
         if (!this.plugin.edHealth.containsKey(edId)) {
@@ -184,10 +178,10 @@ public class TEA_Listener implements Listener {
         }
 
         Player p;
-        if (eventByEntity.getDamager() instanceof Player) {
-            p = (Player) eventByEntity.getDamager();
-        } else if (eventByEntity.getDamager() instanceof Projectile) {
-            final LivingEntity e = ((Projectile) eventByEntity.getDamager()).getShooter();
+        if (event.getDamager() instanceof Player) {
+            p = (Player) event.getDamager();
+        } else if (event.getDamager() instanceof Projectile) {
+            final LivingEntity e = ((Projectile) event.getDamager()).getShooter();
             if (e instanceof Player) {
                 p = (Player) e;
             } else {
@@ -203,14 +197,22 @@ public class TEA_Listener implements Listener {
         } else {
             edData = new HashMap<String, Double>();
         }
-        double totalDmg = eventByEntity.getDamage();
+        double totalDmg = event.getDamage();
         if (edData.containsKey(playerName)) {
             totalDmg += edData.get(playerName);
         }
 
         edData.put(playerName, totalDmg);
         this.plugin.data.put(edId, edData);
-        System.out.println(event.getDamage());
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    public void onEDHitPlayer(final EntityDamageByEntityEvent event) {
+        final EndWorldConfig config = this.plugin.mainEndConfig;
+        if (event.getEntityType() == EntityType.PLAYER && event.getDamager() instanceof EnderDragon) {
+            System.out.println(event.getDamage() + " * " + config.getEnderDragonDamageMultiplier() + " = " +event.getDamage()*config.getEnderDragonDamageMultiplier());
+            event.setDamage((int) Math.ceil(event.getDamage() * config.getEnderDragonDamageMultiplier()));
+        }
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)

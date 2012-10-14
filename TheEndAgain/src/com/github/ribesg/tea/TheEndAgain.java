@@ -367,6 +367,11 @@ public class TheEndAgain extends JavaPlugin {
             config.setEnderDragonHealth(200);
             this.getLogger().warning("enderDragonHealth should greater than 1. Check config. Value set to 200 !");
         }
+        config.setEnderDragonDamageMultiplier(yamlConfig.getDouble("enderDragonDamageMultiplier", 1.0));
+        if (config.getEnderDragonDamageMultiplier() < 0.0) {
+            config.setEnderDragonDamageMultiplier(1.0);
+            this.getLogger().warning("enderDragonDamageMultiplier should greater than 0.0. Check config. Value set to 1.0 !");
+        }
         config.setCustomEggHandling(yamlConfig.getInt("customEggHandling", 0));
         if (config.getCustomEggHandling() != 1 && config.getCustomEggHandling() != 0) {
             this.getLogger().severe("customEggHandling should be 0 or 1. Check config. Value set to 0 !");
@@ -451,6 +456,9 @@ public class TheEndAgain extends JavaPlugin {
 
             out.write("#Change the health value of the EnderDragon. Default = 200\n");
             out.write("enderDragonHealth: " + yamlConfig.getInt("enderDragonHealth", 200) + "\n\n");
+
+            out.write("#Change the damage done by EnderDragons. Default absolute value depends on which difficulty you play (3 to 7.5 hearts), so it's a multiplier\n");
+            out.write("enderDragonDamageMultiplier: " + yamlConfig.getDouble("enderDragonDamageMultiplier", 1.0) + "\n\n");
 
             out.write("#Prevent EnderDragon from creating portals on Death ?\n");
             out.write("#    * 0    = Disabled - portal will spawn normally. Removes any obsidian tower who could block it.\n");

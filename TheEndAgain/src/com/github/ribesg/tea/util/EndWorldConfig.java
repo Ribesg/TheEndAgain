@@ -29,7 +29,8 @@ public class EndWorldConfig {
     private String[]          expMessage1;
     private String[]          expMessage2;
     private int               customEggHandling;
-    private String eggMessage;
+    private String            eggMessage;
+    private double            enderDragonDamageMultiplier;
 
     private int               nbEd;
 
@@ -208,5 +209,13 @@ public class EndWorldConfig {
 
     public void setEggMessage(final String eggMessage) {
         this.eggMessage = eggMessage;
+    }
+
+    public double getEnderDragonDamageMultiplier() {
+        return this.enderDragonDamageMultiplier;
+    }
+
+    public void setEnderDragonDamageMultiplier(final double enderDragonDamageMultiplier) {
+        this.enderDragonDamageMultiplier = enderDragonDamageMultiplier;
     }
 }
