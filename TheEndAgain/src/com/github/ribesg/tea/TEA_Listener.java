@@ -210,7 +210,6 @@ public class TEA_Listener implements Listener {
     public void onEDHitPlayer(final EntityDamageByEntityEvent event) {
         final EndWorldConfig config = this.plugin.mainEndConfig;
         if (event.getEntityType() == EntityType.PLAYER && event.getDamager() instanceof EnderDragon) {
-            System.out.println(event.getDamage() + " * " + config.getEnderDragonDamageMultiplier() + " = " +event.getDamage()*config.getEnderDragonDamageMultiplier());
             event.setDamage((int) Math.ceil(event.getDamage() * config.getEnderDragonDamageMultiplier()));
         }
     }

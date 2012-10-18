@@ -405,7 +405,7 @@ public class TheEndAgain extends JavaPlugin {
             out.write("#Version of the plugin, DO NOT CHANGE THIS VALUE !\n");
             out.write("pluginVersion: " + this.getDescription().getVersion() + "\n\n");
 
-            out.write("#Should we use the [TheEndAgain] prefix in messages ? Yes=true, No=false\n");
+            out.write("#Should we use the [End] prefix in messages ? Yes=true, No=false\n");
             out.write("useTEAPrefix: " + yamlConfig.getBoolean("useTEAPrefix", true) + "\n\n");
 
             out.write("#Should we regen the End world at server stop ? Yes=true, No=false\n");
