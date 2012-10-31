@@ -1,6 +1,7 @@
 # Plugin created for the Itsn3w French Community @ www.itsnew.fr
 name: TheEndAgain
 author: Ribesg
+website: www.itsnew.fr
 main: com.github.ribesg.tea.TheEndAgain
 version: 1.01
 description: Respawn the EnderDragon and/or regen the End world
